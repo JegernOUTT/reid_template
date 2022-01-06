@@ -60,7 +60,7 @@ class BaselinePersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
 
         loss_values = []
         for name, loss, loss_reg in self.losses:
-            if self.miner is not None:
+            if self.miner is not None and 'softmax' not in type(loss).__name__:
                 loss_values.append(loss(embeddings, gt_labels, self.miner(embeddings, gt_labels)))
             else:
                 loss_values.append(loss(embeddings, gt_labels))

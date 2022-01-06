@@ -1,7 +1,6 @@
 from abc import ABC
 from typing import Any, Dict, List, Tuple
 
-import kornia as K
 import kornia.augmentation as KA
 import torch
 
@@ -12,7 +11,9 @@ CfgT = Dict[str, Any]
 
 class OnnxFreezable(ABC):
     def forward_postprocess(self, x):
-        return self.forward(x)
+        x = self.backbone(x)
+        x = self.head(x)
+        return x
 
     @property
     def output_names(self) -> List:
