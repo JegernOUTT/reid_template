@@ -80,7 +80,7 @@ class PersonSampler:
                 })
                 path.unlink()
 
-        return filenames
+        return list(self.output_path.iterdir())
 
     def select_k_random(self, data):
         def is_img(name):
@@ -103,3 +103,7 @@ class PersonSampler:
                 }
                 for img_info, pickle_info in zip(selected_images, selected_pickles)
             ]
+
+    @property
+    def shard_paths(self) -> List[Path]:
+        return [p for p in self.output_path.iterdir() if p.suffix == '.tar']

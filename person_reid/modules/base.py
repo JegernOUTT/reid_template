@@ -67,6 +67,9 @@ class ModuleBuilders:
     def build_miner(miner_distance_cfg: CfgT,
                     miner_cfg: CfgT) -> torch.nn.Module:
         from person_reid.utils.builders import build_distance, build_miner
+        if miner_cfg is None:
+            return None
+
         miner_cfg.update({
             'distance': build_distance(miner_distance_cfg)
         })

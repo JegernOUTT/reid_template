@@ -3,9 +3,12 @@ from typing import Tuple, Dict
 
 import albumentations as A
 import cv2
+import numpy as np
 from dssl_dl_utils import Size2D
+from dssl_dl_utils.utils.image import read_image
 
 __all__ = ['make_crop_and_resize']
+
 
 
 class LetterPackResize(A.DualTransform):
@@ -40,12 +43,24 @@ class LetterPackResize(A.DualTransform):
 
         scale = new_h / params["rows"]
         return A.keypoint_scale(keypoint, scale, scale)
-    
+
     def apply_to_mask(self, img, **params):
         return self.apply(img, **{k: cv2.INTER_NEAREST if k == "interpolation" else v for k, v in params.items()})
 
     def get_transform_init_args_names(self):
         return "width", "height", "interpolation"
+
+
+def jpg_decoder(data):
+    return read_image(data)
+
+
+def jpeg_decoder(data):
+    return read_image(data)
+
+
+def png_decoder(data):
+    return read_image(data)
 
 
 def make_crop_and_resize(image_size: Size2D, with_keypoints_and_masks: bool = False):
@@ -76,9 +91,18 @@ def make_crop_and_resize(image_size: Size2D, with_keypoints_and_masks: bool = Fa
             extra_args['mask'] = data.pop('mask')
             extra_args['keypoints'] = data.pop('keypoints')
 
-        augmented = transform_pipeline(image=data.pop('image'), **extra_args)
+        image = data.pop('image')
+        try:
+            augmented = transform_pipeline(image=image, **extra_args)
+            augmented['valid'] = True
+        except (cv2.error, ZeroDivisionError):
+            print(f'Invalid image: {data["__key__"]}, skipping it')
+            augmented = data
+            augmented.update({'valid': False, 'image': image})
+            if with_keypoints_and_masks:
+                augmented.update({'mask': extra_args['mask'], 'keypoints': extra_args['keypoints']})
 
-        output = {'image': augmented['image']}
+        output = {'image': augmented['image'], 'valid': augmented['valid']}
         if with_keypoints_and_masks:
             output.update({'mask': augmented['mask'], 'keypoints': augmented['keypoints']})
         output.update(data)

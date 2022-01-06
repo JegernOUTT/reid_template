@@ -9,9 +9,9 @@ __all__ = ['retrieve_data_module_info', 'build_params_for_trainer', 'save_best_c
 
 
 def retrieve_data_module_info(data_module):
-    if rank_zero_only.rank == 0:
-        data_module.prepare_data()
     data_module.setup(stage="fit")
+    if rank_zero_only.rank == 0:
+        data_module.resample()
     print(f'Train person categories count: {data_module.person_categories_count("train")}')
     print(f'Val person categories count: {data_module.person_categories_count("val")}')
     print(f'Train camera categories count: {data_module.cameras_categories_count("train")}')

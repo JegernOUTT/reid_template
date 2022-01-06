@@ -1,5 +1,3 @@
-from builtins import super
-
 import pytorch_lightning as pl
 import torch
 
@@ -60,10 +58,12 @@ class BaselinePersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
         images, gt_labels = batch['image'], batch['person_idx']
         embeddings = self.forward(self.train_transforms(images))
 
-        hard_pairs = self.miner(embeddings, gt_labels)
         loss_values = []
         for name, loss, loss_reg in self.losses:
-            loss_values.append(loss(embeddings, gt_labels, hard_pairs))
+            if self.miner is not None:
+                loss_values.append(loss(embeddings, gt_labels, self.miner(embeddings, gt_labels)))
+            else:
+                loss_values.append(loss(embeddings, gt_labels))
             self.log(f'loss/{name}', loss_values[-1], prog_bar=True, on_epoch=False, on_step=True, logger=True)
 
         self.log("lr", self.optimizers().optimizer.param_groups[0]['lr'], prog_bar=True, on_step=True, logger=False)
@@ -78,7 +78,7 @@ class BaselinePersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
 
     def validation_epoch_end(self, outputs):
         for metric_name, metric in self.metrics:
-            self.log(metric_name, metric.compute(), prog_bar=True, on_epoch=True, logger=True)
+            self.log(f'metrics/{metric_name}', metric.compute(), prog_bar=True, on_epoch=True, logger=True)
 
     def configure_optimizers(self):
         return [self.optimizer], [self.scheduler_info]

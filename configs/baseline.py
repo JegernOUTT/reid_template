@@ -17,7 +17,7 @@ data_base_path = Path('/media/svakhreev/fast/person_reid')
 def datamodule_cfg():
     return dict(
         type='DataModule',
-        train_paths=[p for p in (data_base_path / 'train_shards').iterdir() if p.suffix == '.tar'],
+        train_paths=[p for p in (data_base_path / 'train').iterdir() if p.suffix == '.tar'],
         val_paths=[p for p in (data_base_path / 'test').iterdir() if p.suffix == '.tar'],
         sampler=dict(type='PersonSampler', output_path=data_base_path / 'train_shards'),
         full_resample=False,
@@ -43,6 +43,7 @@ def trainer_cfg(train_num_classes, **kwargs):
         precision=16,
         sync_batchnorm=True,
         strategy='ddp_find_unused_parameters_false',
+        check_val_every_n_epoch=10,
         wandb_logger=dict(
             name=f'{Path(__file__).stem}_{image_size.width}x{image_size.height}'
                  f'_bs{batch_size}_ep{epochs}_cls{train_num_classes}',
@@ -51,7 +52,7 @@ def trainer_cfg(train_num_classes, **kwargs):
     )
 
 
-def mainmodule_cfg(train_dataset_len, **kwargs):
+def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
     return dict(
         type='BaselinePersonReid',
         # Model agnostic parameters
@@ -64,8 +65,8 @@ def mainmodule_cfg(train_dataset_len, **kwargs):
                                     image_size.width // backbone_max_stride)
         ),
         # Batch data miner agnostic parameters
-        miner_distance_cfg=dict(type='LpDistance', power=2),
-        miner_cfg=dict(type='BatchHardMiner'),
+        miner_distance_cfg=None,
+        miner_cfg=None,
 
         # Loss stuff agnostic parameters
         loss_distance_cfg=dict(type='LpDistance', power=2),

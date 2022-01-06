@@ -1,3 +1,4 @@
+import json
 import pickle
 from functools import partial
 from pathlib import Path
@@ -10,13 +11,15 @@ from dssl_dl_utils import Size2D
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 
-from person_reid.data.base_transforms import make_crop_and_resize
+from person_reid.data.base_transforms import make_crop_and_resize, jpg_decoder, jpeg_decoder, png_decoder
 from person_reid.data.ds_info_extractors import DATASETS_EXTRACTORS, IGNORE_VALUE
 
 __all__ = ['DataModule']
 
 
 class DataModule(pl.LightningDataModule):
+    CACHE_FILENAME = 'cache.json'
+
     def __init__(self,
                  train_paths: List[Path],
                  val_paths: List[Path],
@@ -44,31 +47,15 @@ class DataModule(pl.LightningDataModule):
             for extractor in DATASETS_EXTRACTORS.values()
         }
 
-        self._dry_train_dataset = None
         self._train_dataset = None
         self._train_overall_length = None
         self._train_ds_indexes = None
         self._train_indexes_offsets = None
 
-        self._dry_val_dataset = None
         self._val_dataset = None
         self._val_overall_length = None
         self._val_ds_indexes = None
         self._val_indexes_offsets = None
-
-    def prepare_data(self, *args, **kwargs):
-        if not self._full_resample:
-            print('Skipping full resampling. Be sure that you have correct and fresh training shards')
-            return
-
-        new_paths = self._sampler.resample_dataset((
-            self._build_ds(self._train_dataset, True, False)
-                .map(partial(data._recalculate_indexes, 'train')))
-        )
-        new_paths = list(map(str, new_paths))
-        print(f"Full resampling completed, use these paths in the future if you're not gonna change "
-              f"sampling params:\n{new_paths}")
-        self._train_paths = new_paths
 
     def setup(self, stage: Optional[str] = None):
         def _retrieve_ds_info(dataset):
@@ -91,24 +78,46 @@ class DataModule(pl.LightningDataModule):
                 cam_idx_buff += DATASETS_EXTRACTORS[idx].cameras_count()
             return indexes_offsets
 
+        if not self._full_resample:
+            self._train_paths = list(map(str, self._sampler.shard_paths))
+
+        if self._try_to_load_cache():
+            return
+
         print('Loading train datasets')
-        self._dry_train_dataset = self._build_ds(self._train_paths, False, True)
-        self._train_overall_length, self._train_ds_indexes = _retrieve_ds_info(self._dry_train_dataset)
+        _dry_train_dataset = self._build_ds(self._train_paths, True, not self._full_resample)
+        self._train_overall_length, self._train_ds_indexes = _retrieve_ds_info(_dry_train_dataset)
         self._train_indexes_offsets = _calc_indexes_offsets(self._train_ds_indexes)
         print(f'Train datasets overall size: {self._train_overall_length}')
 
         print('\nLoading validation datasets')
-        self._dry_val_dataset = self._build_ds(self._val_paths, True, False)
-        self._val_overall_length, self._val_ds_indexes = _retrieve_ds_info(self._dry_val_dataset)
+        _dry_val_dataset = self._build_ds(self._val_paths, True, False)
+        self._val_overall_length, self._val_ds_indexes = _retrieve_ds_info(_dry_val_dataset)
         self._val_indexes_offsets = _calc_indexes_offsets(self._val_ds_indexes)
         print(f'Validation datasets overall size: {self._val_overall_length}')
+
+        self._save_to_cache()
+
+    def resample(self, *args, **kwargs):
+        if not self._full_resample:
+            print('Skipping full resampling. Be sure that you have correct and fresh training shards')
+            return
+
+        new_paths = self._sampler.resample_dataset((
+            self._build_ds(self._train_paths, True, False)
+                .map(partial(self._recalculate_indexes, 'train')))
+        )
+        print(f"Full resampling completed")
+
+        self._train_paths = list(map(str, new_paths))
 
     def _build_ds(self, paths, add_extra_filters=False, add_sampler_preprocessing=False):
         def _filter(dataset):
             if add_extra_filters:
                 return (dataset
                         .select(lambda x: 'jpg' in x or 'png' in x or 'jpeg' in x)
-                        .select(lambda x: pickle.loads(x['pickle']).bbox is not None))
+                        .select(lambda x: pickle.loads(x['pickle']).bbox is not None)
+                        .select(lambda x: pickle.loads(x['pickle']).keypoint_graph is not None))
             else:
                 return dataset
 
@@ -159,20 +168,26 @@ class DataModule(pl.LightningDataModule):
     def _make_dataloader(self, mode):
         if mode == 'train':
             overall_length = self._train_overall_length
-            dataset = (self._build_ds(self._train_paths, False, True)
+            dataset = (self._build_ds(self._train_paths, True, True)
                        .shuffle(self._batch_size)
-                       .decode("rgb8")
+                       .decode(webdataset.handle_extension("jpg", jpg_decoder),
+                               webdataset.handle_extension("jpeg", jpeg_decoder),
+                               webdataset.handle_extension("png", png_decoder))
                        .map(partial(self._recalculate_indexes, mode))
                        .map(make_crop_and_resize(self._image_size, self._with_keypoints_and_masks))
+                       .select(lambda x: x['valid'])
                        .map(partial(self._format_output, mode)))
             self._train_dataset = dataset
         else:
             overall_length = self._val_overall_length
             dataset = (self._build_ds(self._val_paths, True, False)
-                       .decode("rgb8")
+                       .decode(webdataset.handle_extension("jpg", jpg_decoder),
+                               webdataset.handle_extension("jpeg", jpeg_decoder),
+                               webdataset.handle_extension("png", png_decoder))
                        .map(self._expose_metadata)
                        .map(partial(self._recalculate_indexes, mode))
                        .map(make_crop_and_resize(self._image_size, self._with_keypoints_and_masks))
+                       .select(lambda x: x['valid'])
                        .map(partial(self._format_output, mode)))
             self._val_dataset = dataset
 
@@ -203,22 +218,62 @@ class DataModule(pl.LightningDataModule):
     def len(self, mode):
         return self._train_overall_length if mode == 'train' else self._val_overall_length
 
+    def _try_to_load_cache(self):
+        assert len(self._train_paths) > 0
+        cache_path = Path(self._train_paths[0]).parent / DataModule.CACHE_FILENAME
+        if not cache_path.exists():
+            return False
+
+        with open(cache_path, 'r') as f:
+            cache = json.load(f)
+
+        print(f'Loading train datasets from cache: {cache_path}')
+        self._train_overall_length = cache['train_overall_length']
+        self._train_ds_indexes = set(cache['train_ds_indexes'])
+        self._train_indexes_offsets = {int(k): v for k, v in cache['train_indexes_offsets'].items()}
+        print(f'Train datasets overall size: {self._train_overall_length}')
+
+        print(f'\nLoading validation datasets from cache: {cache_path}')
+        self._val_overall_length = cache['val_overall_length']
+        self._val_ds_indexes = set(cache['val_ds_indexes'])
+        self._val_indexes_offsets = {int(k): v for k, v in cache['val_indexes_offsets'].items()}
+        print(f'Validation datasets overall size: {self._val_overall_length}')
+
+        return True
+
+    def _save_to_cache(self):
+        cache = {
+            'train_overall_length': self._train_overall_length,
+            'train_ds_indexes': list(self._train_ds_indexes),
+            'train_indexes_offsets': self._train_indexes_offsets,
+            'val_overall_length': self._val_overall_length,
+            'val_ds_indexes': list(self._val_ds_indexes),
+            'val_indexes_offsets': self._val_indexes_offsets,
+        }
+
+        assert len(self._train_paths) > 0
+        cache_path = Path(self._train_paths[0]).parent / DataModule.CACHE_FILENAME
+        assert not cache_path.exists()
+
+        with open(cache_path, 'w') as f:
+            json.dump(cache, f)
+
 
 if __name__ == '__main__':
     import cv2
 
     base_path = Path('/media/svakhreev/fast/person_reid/')
     batch_size = 16
-    train_paths = [p for p in (base_path / 'train_shards').iterdir() if p.suffix == '.tar']
+    train_paths = [p for p in (base_path / 'train').iterdir() if p.suffix == '.tar'][:1]
     data = DataModule(train_paths=train_paths,
-                      val_paths=[base_path / 'TEST/last_test.tar'],
+                      val_paths=[base_path / 'test/last_test.tar'],
                       sampler=dict(type='PersonSampler', output_path=base_path / 'train_shards'),
                       full_resample=False,
                       image_size=Size2D(128, 256),
                       with_keypoints_and_masks=True,
                       batch_size=batch_size)
-    data.prepare_data()
     data.setup()
+    data.resample()
 
     print(f'Train person categories count: {data.person_categories_count("train")}')
     print(f'Val person categories count: {data.person_categories_count("val")}')
