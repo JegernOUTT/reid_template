@@ -14,16 +14,30 @@ from tqdm import tqdm
 __all__ = ['PersonSampler']
 
 
+def default_intra_person_sampler(images, images_per_person=4, **kwargs):
+    from person_reid.data.ds_info_extractors import extract_ds_metadata, IGNORE_VALUE
+
+    images_metadata = [extract_ds_metadata(os.path.splitext(img.name)[0]) for img in images]
+    images = [img for img, metadata in zip(images, images_metadata)
+              if metadata['_clothes_idx'] in {IGNORE_VALUE, 0}]
+
+    if len(images) < images_per_person:
+        selected_images = images
+    else:
+        selected_images = random.choices(images, k=images_per_person)
+    return selected_images
+
+
 class PersonSampler:
     def __init__(self,
                  output_path: Path,
                  shards_max_count=500,
-                 images_per_person=4,
-                 images_ext=('.jpg', '.jpeg', '.png')):
+                 images_ext=('.jpg', '.jpeg', '.png'),
+                 intra_person_sampler=default_intra_person_sampler):
         self.output_path = output_path
         self.shards_max_count = shards_max_count
-        self.images_per_person = images_per_person
         self.images_ext = set(images_ext)
+        self.intra_person_sampler = intra_person_sampler
 
     def resample_dataset(self, dataset) -> List[Path]:
         shutil.rmtree(self.output_path, ignore_errors=True)
@@ -92,7 +106,7 @@ class PersonSampler:
             pickles = {Path(item.name).name: item for item in tar_list}
             images = [item for item in tar_list if is_img(item.name)]
 
-            selected_images = random.choices(images, k=self.images_per_person)
+            selected_images = self.intra_person_sampler(images)
             selected_pickles = [pickles[f'{Path(item.name).stem}.pickle'] for item in selected_images]
 
             return [

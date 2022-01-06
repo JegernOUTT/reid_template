@@ -2,17 +2,15 @@ import importlib
 from logging import warning
 from typing import Tuple
 
-import albumentations as Albumentations
-import albumentations.pytorch as AlbumentationsPytorch
 import kornia.augmentation as Kornia
 import pretrainedmodels
 import pytorch_lightning.callbacks as LightningCallbacks
 import pytorch_loss as PytorchExtraLosses
 import pytorch_metric_learning.distances as Distances
+import pytorch_metric_learning.losses as MetricLearningLosses
 import pytorch_metric_learning.miners as Miners
 import pytorch_metric_learning.reducers as LossReducers
 import pytorch_metric_learning.regularizers as LossRegularizers
-import pytorch_metric_learning.losses as MetricLearningLosses
 import timm
 import torch
 import torch.nn as TorchNNModules
@@ -27,6 +25,7 @@ import person_reid.loss.softmax_losses as SoftmaxLosses
 import person_reid.metrics as CustomMetrics
 import person_reid.modelling.backbones as Backbones
 import person_reid.modelling.heads as Heads
+import person_reid.modelling.transforms as Transforms
 import person_reid.modules as Modules
 
 __all__ = [
@@ -120,7 +119,7 @@ def build_head(input_channels: int, config):
 
 def build_transform(config):
     def _builder(cfg):
-        modules = [Albumentations, AlbumentationsPytorch, Kornia]
+        modules = [Kornia, Transforms]
 
         if 'transforms' in cfg:
             cfg['transforms'] = [

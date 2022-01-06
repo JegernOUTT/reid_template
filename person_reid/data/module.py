@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from person_reid.data.base_transforms import make_crop_and_resize, jpg_decoder, jpeg_decoder, png_decoder
-from person_reid.data.ds_info_extractors import DATASETS_EXTRACTORS, IGNORE_VALUE
+from person_reid.data.ds_info_extractors import DATASETS_EXTRACTORS, IGNORE_VALUE, extract_ds_metadata
 
 __all__ = ['DataModule']
 
@@ -42,10 +42,6 @@ class DataModule(pl.LightningDataModule):
         self._with_keypoints_and_masks = with_keypoints_and_masks
         self._batch_size = batch_size
         self._loader_kwargs = loader_kwargs
-        self._ds_extractors = {
-            extractor.name(): extractor
-            for extractor in DATASETS_EXTRACTORS.values()
-        }
 
         self._train_dataset = None
         self._train_overall_length = None
@@ -111,7 +107,8 @@ class DataModule(pl.LightningDataModule):
 
         self._train_paths = list(map(str, new_paths))
 
-    def _build_ds(self, paths, add_extra_filters=False, add_sampler_preprocessing=False):
+    def _build_ds(self, paths, add_extra_filters=False, add_sampler_preprocessing=False,
+                  **dataset_kwargs):
         def _filter(dataset):
             if add_extra_filters:
                 return (dataset
@@ -122,27 +119,17 @@ class DataModule(pl.LightningDataModule):
                 return dataset
 
         if add_sampler_preprocessing:
-            return (_filter(webdataset.WebDataset(paths)
+            return (_filter(webdataset.WebDataset(paths, **dataset_kwargs)
                             .map(self._sampler.select_k_random)
                             .unlisted())
                     .map(self._expose_metadata))
         else:
-            return (_filter(webdataset.WebDataset(paths))
+            return (_filter(webdataset.WebDataset(paths, **dataset_kwargs))
                     .map(self._expose_metadata))
 
     def _expose_metadata(self, data):
-        ds_name = data['__key__'].split('/')[0]
-        assert ds_name in self._ds_extractors, f'Unknown dataset: {ds_name}'
-        extractor = self._ds_extractors[ds_name]
-        extracted = extractor.extract(data)
-        assert extracted['_person_idx'] < extractor.persons_count(), f'Check {extractor.__name__} extractor validity'
-        assert extracted['_person_idx'] >= 0, f'Check {extractor.__name__} extractor validity'
-
-        assert extracted['_cam_idx'] == IGNORE_VALUE or extracted['_cam_idx'] < extractor.cameras_count(), \
-            f'Check {extractor.__name__} extractor validity'
-        assert extracted['_cam_idx'] >= 0 or extracted['_cam_idx'] < extractor.cameras_count(), \
-            f'Check {extractor.__name__} extractor validity'
-        return extracted
+        data.update(extract_ds_metadata(data['__key__']))
+        return data
 
     def _recalculate_indexes(self, mode, data):
         offsets = self._train_indexes_offsets if mode == 'train' else self._val_indexes_offsets
@@ -168,7 +155,7 @@ class DataModule(pl.LightningDataModule):
     def _make_dataloader(self, mode):
         if mode == 'train':
             overall_length = self._train_overall_length
-            dataset = (self._build_ds(self._train_paths, True, True)
+            dataset = (self._build_ds(self._train_paths, True, True, shardshuffle=True)
                        .shuffle(self._batch_size)
                        .decode(webdataset.handle_extension("jpg", jpg_decoder),
                                webdataset.handle_extension("jpeg", jpeg_decoder),
@@ -180,7 +167,7 @@ class DataModule(pl.LightningDataModule):
             self._train_dataset = dataset
         else:
             overall_length = self._val_overall_length
-            dataset = (self._build_ds(self._val_paths, True, False)
+            dataset = (self._build_ds(self._val_paths, True, False, shardshuffle=False)
                        .decode(webdataset.handle_extension("jpg", jpg_decoder),
                                webdataset.handle_extension("jpeg", jpeg_decoder),
                                webdataset.handle_extension("png", png_decoder))
@@ -297,4 +284,4 @@ if __name__ == '__main__':
             print(f'Person index: {item["person_idx"][i].item()}')
             print(f'Camera index: {item["cam_idx"][i].item()}')
             print(f'Clothes index: {item["clothes_idx"][i].item()}\n\n')
-            cv2.waitKey(0)
+            cv2.waitKey(1)

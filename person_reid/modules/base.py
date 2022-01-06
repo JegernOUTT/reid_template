@@ -81,14 +81,15 @@ class ModuleBuilders:
                    loss_distance_cfg: CfgT,
                    loss_regularizer_cfg: CfgT,
                    loss_reducer_cfg: CfgT,
-                   loss_cfg: CfgT) -> Tuple[str, torch.nn.Module, torch.nn.Module]:
+                   loss_cfg: CfgT) -> Tuple[str, torch.nn.Module]:
         from person_reid.utils.builders import (build_distance, build_loss_regularizer,
                                                 build_loss_reducer, build_loss)
         loss_cfg.update({
             'distance': build_distance(loss_distance_cfg),
+            'embedding_regularizer': build_loss_regularizer(loss_regularizer_cfg),
             'reducer': build_loss_reducer(loss_reducer_cfg)
         })
-        return loss_name, build_loss(loss_cfg), build_loss_regularizer(loss_regularizer_cfg)
+        return loss_name, build_loss(loss_cfg)
 
     @staticmethod
     def build_metric(metric_name: str,

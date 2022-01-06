@@ -1,6 +1,7 @@
-from typing import Any, Dict
+from pathlib import Path
+from typing import Union
 
-__all__ = ['DATASETS_EXTRACTORS', 'IGNORE_VALUE']
+__all__ = ['IGNORE_VALUE', 'extract_ds_metadata']
 
 IGNORE_VALUE = int(-1e2)
 
@@ -21,16 +22,15 @@ class Market1501:
         return 6
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx = int(key[0]) - 1
         cam_idx = int(key[1][1])
         return {
             '_dataset_idx': Market1501.IDX,
             '_person_idx': person_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -50,15 +50,14 @@ class Last:
         return 0
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].replace('__', '_').split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].replace('__', '_').split('_')
         person_idx, image_idx, video_idx, frame_idx, bbox_idx, clothes_idx = map(int, key)
         return {
             '_dataset_idx': Last.IDX,
             '_person_idx': person_idx,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': clothes_idx - 1,
-            **data
+            '_clothes_idx': clothes_idx - 1
         }
 
 
@@ -78,17 +77,16 @@ class LastTest:
         return 0
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].replace('__', '_').split('_')
-        is_query = 'query' in data['__key__']
+    def extract(path: str):
+        key = path.split('/')[-1].replace('__', '_').split('_')
+        is_query = 'query' in path
         person_idx, image_idx, video_idx, frame_idx, bbox_idx, clothes_idx = map(int, key)
         return {
             '_dataset_idx': LastTest.IDX,
             '_is_query': is_query,
             '_person_idx': person_idx,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': clothes_idx,
-            **data
+            '_clothes_idx': clothes_idx
         }
 
 
@@ -108,14 +106,13 @@ class DDDPes:
         return 0
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         return {
             '_dataset_idx': DDDPes.IDX,
             '_person_idx': int(key[0]) - 1,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -135,14 +132,13 @@ class Caviar4Reid:
         return 0
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1]
+    def extract(path: str):
+        key = path.split('/')[-1]
         return {
             '_dataset_idx': Caviar4Reid.IDX,
             '_person_idx': int(key[:4]) - 1,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -169,8 +165,8 @@ class CUHK03:
         return 5
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         cam_idx, person_idx = map(int, key[:2])
         person_idx += CUHK03.CAM_OFFSETS[cam_idx]
 
@@ -178,8 +174,7 @@ class CUHK03:
             '_dataset_idx': CUHK03.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -199,15 +194,14 @@ class DukeMTMC:
         return 8
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx, cam_idx = int(key[0]), int(key[1][1:])
         return {
             '_dataset_idx': DukeMTMC.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -232,8 +226,8 @@ class ETH:
         return 3
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         cam_idx = int(key[-3][3:])
         person_idx = int(key[-2][1:])
         person_idx += ETH.CAM_OFFSETS[cam_idx]
@@ -241,8 +235,7 @@ class ETH:
             '_dataset_idx': ETH.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -262,14 +255,13 @@ class FSBReid:
         return 0
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         return {
             '_dataset_idx': FSBReid.IDX,
             '_person_idx': int(key[-2]),
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -293,8 +285,8 @@ class ILIDSVID:
         return 2
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         cam_idx = int(key[0][3:])
         person_idx = int(key[1][6:])
         person_idx += ILIDSVID.CAM_OFFSETS[cam_idx]
@@ -302,8 +294,7 @@ class ILIDSVID:
             '_dataset_idx': ILIDSVID.IDX,
             '_person_idx': person_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -323,15 +314,14 @@ class MSMT17:
         return 15
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx, _, cam_idx = map(int, key[:3])
         return {
             '_dataset_idx': MSMT17.IDX,
             '_person_idx': person_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -351,16 +341,15 @@ class PKUReid:
         return 2
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx, cam_idx, _ = map(int, key[:3])
 
         return {
             '_dataset_idx': PKUReid.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -380,8 +369,8 @@ class PRID2011:
         return 2
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         if key[-3] == 'single_shot':
             person_idx = int(key[-1][7:])
             cam = key[-2]
@@ -393,8 +382,7 @@ class PRID2011:
             '_dataset_idx': PRID2011.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': 0 if cam == 'cam_a' else 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -414,15 +402,14 @@ class QMULILIDS:
         return 0
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         person_idx = int(key[-1][:4])
         return {
             '_dataset_idx': QMULILIDS.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -442,15 +429,14 @@ class Real28:
         return 4
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx, cam_idx, clothes_idx, _ = map(int, key)
         return {
             '_dataset_idx': Real28.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': clothes_idx - 1,
-            **data
+            '_clothes_idx': clothes_idx - 1
         }
 
 
@@ -470,15 +456,14 @@ class VCClothes:
         return 4
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('-')
+    def extract(path: str):
+        key = path.split('/')[-1].split('-')
         person_idx, cam_idx, clothes_idx, _ = map(int, key)
         return {
             '_dataset_idx': VCClothes.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': clothes_idx - 1,
-            **data
+            '_clothes_idx': clothes_idx - 1
         }
 
 
@@ -498,8 +483,8 @@ class Viper:
         return 2
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         person_idx = int(key[-1].split('_')[0])
         cam_idx = 0 if key[-2] == 'cam_a' else 1
 
@@ -507,8 +492,7 @@ class Viper:
             '_dataset_idx': Viper.IDX,
             '_person_idx': person_idx,
             '_cam_idx': cam_idx,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -528,8 +512,8 @@ class Ward:
         return 3
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         person_idx = int(key[-1][:4])
         cam_idx = int(key[-1][4:8])
 
@@ -537,8 +521,7 @@ class Ward:
             '_dataset_idx': Ward.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -565,8 +548,8 @@ class CUHK02:
         return 2
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         person_idx = int(key[-1].split('_')[0])
         cam_idx = int(key[-2][3:])
         person_idx += CUHK02.SCENE_OFFSETS[key[-3]]
@@ -577,8 +560,7 @@ class CUHK02:
             '_dataset_idx': CUHK02.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -598,15 +580,14 @@ class RAiD:
         return 4
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx, cam_idx, _ = map(int, key)
         return {
             '_dataset_idx': VCClothes.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -626,16 +607,15 @@ class MARS:
         return 6
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1]
+    def extract(path: str):
+        key = path.split('/')[-1]
         person_idx = int(key[:4])
         cam_idx = int(key[5])
         return {
             '_dataset_idx': MARS.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -666,8 +646,8 @@ class UnrealPerson:
         return 34
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         model_type_idx = int(key[-3][10])
         scene_type_idx = int(key[-3][8])
         name_splat = key[-1].split('_')
@@ -682,8 +662,7 @@ class UnrealPerson:
             '_dataset_idx': UnrealPerson.IDX,
             '_person_idx': person_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -703,15 +682,14 @@ class CUHKSYSU:
         return 0
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx = int(key[0][1:])
         return {
             '_dataset_idx': CUHKSYSU.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -731,16 +709,15 @@ class GRID:
         return 2
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx = int(key[0])
-        cam_idx = 0 if 'gallery' in data['__key__'] else 1
+        cam_idx = 0 if 'gallery' in path else 1
         return {
             '_dataset_idx': GRID.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -760,15 +737,14 @@ class PRAI1581:
         return 0
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')[-1].split('_')
+    def extract(path: str):
+        key = path.split('/')[-1].split('_')
         person_idx = int(key[0])
         return {
             '_dataset_idx': PRAI1581.IDX,
             '_person_idx': person_idx,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -788,16 +764,15 @@ class WildtrackDataset:
         return 7
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         person_idx = int(key[-2])
         cam_idx = int(key[-1].split('_')[0])
         return {
             '_dataset_idx': WildtrackDataset.IDX,
             '_person_idx': person_idx,
             '_cam_idx': cam_idx,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -817,16 +792,15 @@ class RPIField:
         return 12
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         person_idx = int(key[-2].split('_')[0])
         cam_idx = int(key[-3][4:])
         return {
             '_dataset_idx': RPIField.IDX,
             '_person_idx': person_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -856,8 +830,8 @@ class LPW:
         return 11
 
     @staticmethod
-    def extract(data: Dict[str, Any]):
-        key = data['__key__'].split('/')
+    def extract(path: str):
+        key = path.split('/')
         person_idx = int(key[-2])
         cam_idx = int(key[-3][4:])
         scene_idx = int(key[-4][4:]) - 1
@@ -869,8 +843,7 @@ class LPW:
             '_dataset_idx': LPW.IDX,
             '_person_idx': person_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE,
-            **data
+            '_clothes_idx': IGNORE_VALUE
         }
 
 
@@ -904,3 +877,23 @@ DATASETS_EXTRACTORS = {
     RPIField.IDX: RPIField,
     LPW.IDX: LPW,
 }
+
+DB_EXTRACTORS_PER_DS_NAME = {
+    extractor.name(): extractor
+    for extractor in DATASETS_EXTRACTORS.values()
+}
+
+
+def extract_ds_metadata(path: Union[Path, str]):
+    path = Path(path)
+    ds_name = path.parts[0]
+    assert ds_name in DB_EXTRACTORS_PER_DS_NAME, f'Unknown dataset: {ds_name}'
+    extractor = DB_EXTRACTORS_PER_DS_NAME[ds_name]
+    extracted = extractor.extract(str(path))
+    assert extracted['_person_idx'] < extractor.persons_count(), f'Check {extractor.__name__} extractor validity'
+    assert extracted['_person_idx'] >= 0, f'Check {extractor.__name__} extractor validity'
+    assert extracted['_cam_idx'] == IGNORE_VALUE or extracted['_cam_idx'] < extractor.cameras_count(), \
+        f'Check {extractor.__name__} extractor validity'
+    assert extracted['_cam_idx'] >= 0 or extracted['_cam_idx'] < extractor.cameras_count(), \
+        f'Check {extractor.__name__} extractor validity'
+    return extracted

@@ -56,9 +56,9 @@ def trainer_cfg(train_num_classes, **kwargs):
 
 def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
     return dict(
-        type='BaselinePersonReid',
+        type='KeypointsMaskPersonReid',
         # Model agnostic parameters
-        backbone_cfg=dict(type='MobileFaceNet'),
+        backbone_cfg=dict(type='MobileFaceNet', input_channels=21),
         head_cfg=dict(
             type='GDC',
             input_channels=backbone_features_number,

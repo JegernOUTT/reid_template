@@ -1,12 +1,13 @@
 import pytorch_lightning as pl
 import torch
 
+from person_reid.modelling.transforms import MaskKeypointsConcat
 from person_reid.modules.base import OnnxFreezable, ModuleBaseMixin, ModuleBuilders, KorniaAugmentations
 
-__all__ = ['BaselinePersonReid']
+__all__ = ['KeypointsMaskPersonReid']
 
 
-class BaselinePersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
+class KeypointsMaskPersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
     def __init__(self, **kwargs):
         super().__init__()
         OnnxFreezable.__init__(self)
@@ -49,14 +50,17 @@ class BaselinePersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
         self.train_transforms = KorniaAugmentations()
         self.val_transforms = KorniaAugmentations()
 
+        self.masks_keypoints_concat = MaskKeypointsConcat()
+
     def forward(self, x):
         x = self.backbone(x)
         x = self.head(x)
         return x
 
     def training_step(self, batch, batch_idx):
-        images, gt_labels = batch['image'], batch['person_idx']
-        embeddings = self.forward(self.train_transforms(images))
+        images, gt_labels, masks, keypoints = batch['image'], batch['person_idx'], batch['mask'], batch['keypoints']
+        images = self.masks_keypoints_concat(self.train_transforms(images), masks, keypoints)
+        embeddings = self.forward(images)
 
         loss_values = []
         for name, loss in self.losses:
@@ -70,9 +74,10 @@ class BaselinePersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
         return torch.stack(loss_values).sum()
 
     def validation_step(self, batch, batch_idx, dataset_idx=0):
-        images, gt_labels, is_query = batch['image'], batch['person_idx'], batch['is_query']
-        embeddings = self.forward(self.val_transforms(images))
-
+        images, gt_labels, is_query, masks, keypoints = \
+            batch['image'], batch['person_idx'], batch['is_query'], batch['mask'], batch['keypoints']
+        images = self.masks_keypoints_concat(self.val_transforms(images), masks, keypoints)
+        embeddings = self.forward(images)
         for _, metric in self.metrics:
             metric(embeddings, gt_labels, is_db=~is_query)
 
