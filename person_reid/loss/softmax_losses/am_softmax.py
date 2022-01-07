@@ -20,7 +20,8 @@ class AmSoftmax(SoftmaxLossMixin, torch.nn.Module):
                  out_features,
                  m=0.35,
                  s=30.0,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         super(AmSoftmax, self).__init__()
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.in_features = in_features

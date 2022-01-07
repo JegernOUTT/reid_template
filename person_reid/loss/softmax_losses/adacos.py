@@ -13,7 +13,8 @@ class AdaCos(SoftmaxLossMixin, torch.nn.Module):
                  in_features,
                  out_features,
                  m=0.50,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         torch.nn.Module.__init__(self)
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.in_features = in_features

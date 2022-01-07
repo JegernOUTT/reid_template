@@ -22,7 +22,8 @@ class QAMFace(SoftmaxLossMixin, torch.nn.Module):
                  out_features,
                  s=6.,
                  m=0.5,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         super(QAMFace, self).__init__()
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.classnum = out_features

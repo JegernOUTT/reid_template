@@ -24,7 +24,8 @@ class ArcNegFace(SoftmaxLossMixin, torch.nn.Module):
                  scale=64,
                  margin=0.5,
                  easy_margin=False,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         super(ArcNegFace, self).__init__()
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.in_features = in_features

@@ -14,7 +14,7 @@ from tqdm import tqdm
 __all__ = ['PersonSampler']
 
 
-def default_intra_person_sampler(images, images_per_person=4, **kwargs):
+def default_intra_person_sampler(images, images_per_person=12, **kwargs):
     from person_reid.data.ds_info_extractors import extract_ds_metadata, IGNORE_VALUE
 
     images_metadata = [extract_ds_metadata(os.path.splitext(img.name)[0]) for img in images]
@@ -24,7 +24,7 @@ def default_intra_person_sampler(images, images_per_person=4, **kwargs):
     if len(images) < images_per_person:
         selected_images = images
     else:
-        selected_images = random.choices(images, k=images_per_person)
+        selected_images = random.sample(images, k=images_per_person)
     return selected_images
 
 

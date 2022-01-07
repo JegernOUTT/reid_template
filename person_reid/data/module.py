@@ -250,15 +250,18 @@ if __name__ == '__main__':
     import cv2
 
     base_path = Path('/media/svakhreev/fast/person_reid/')
-    batch_size = 16
-    train_paths = [p for p in (base_path / 'train').iterdir() if p.suffix == '.tar'][:1]
+    batch_size = 128
+    train_paths = [p for p in (base_path / 'train').iterdir() if p.suffix == '.tar']
     data = DataModule(train_paths=train_paths,
                       val_paths=[base_path / 'test/last_test.tar'],
                       sampler=dict(type='PersonSampler', output_path=base_path / 'train_shards'),
                       full_resample=False,
                       image_size=Size2D(128, 256),
                       with_keypoints_and_masks=True,
-                      batch_size=batch_size)
+                      batch_size=batch_size,
+                      num_workers=4,
+                      drop_last=True,
+                      prefetch_factor=8)
     data.setup()
     data.resample()
 
@@ -270,18 +273,22 @@ if __name__ == '__main__':
     print(f'Sampling dataset')
     train_data = data.train_dataloader()
     cv2.namedWindow('image', flags=cv2.WINDOW_KEEPRATIO)
-    for item in train_data:
+    all_categories = set(range(data.person_categories_count("train")))
+    current_indices = set()
+    for item in tqdm(train_data):
         for i in range(batch_size):
-            image = cv2.cvtColor(item['image'][i].cpu().numpy(), cv2.COLOR_RGB2BGR)
-            for x, y in item['keypoints'][i].cpu().numpy():
-                cv2.circle(image, (int(x), int(y)), 2, (0, 255, 0), 3)
-
-            mask = item['mask'][i].cpu().numpy()[..., None].repeat(3, 2)
-            image = np.hstack([image, mask])
-
-            cv2.imshow('image', image)
-            print(f'Dataset index: {DATASETS_EXTRACTORS[item["dataset_idx"][i].item()].__name__}')
-            print(f'Person index: {item["person_idx"][i].item()}')
-            print(f'Camera index: {item["cam_idx"][i].item()}')
-            print(f'Clothes index: {item["clothes_idx"][i].item()}\n\n')
-            cv2.waitKey(1)
+            current_indices.add(item["person_idx"][i].item())
+            # image = cv2.cvtColor(item['image'][i].cpu().numpy(), cv2.COLOR_RGB2BGR)
+            # for x, y in item['keypoints'][i].cpu().numpy():
+            #     cv2.circle(image, (int(x), int(y)), 2, (0, 255, 0), 3)
+            #
+            # mask = item['mask'][i].cpu().numpy()[..., None].repeat(3, 2)
+            # image = np.hstack([image, mask])
+            #
+            # cv2.imshow('image', image)
+            # print(f'Dataset index: {DATASETS_EXTRACTORS[item["dataset_idx"][i].item()].__name__}')
+            # print(f'Person index: {item["person_idx"][i].item()}')
+            # print(f'Camera index: {item["cam_idx"][i].item()}')
+            # print(f'Clothes index: {item["clothes_idx"][i].item()}\n\n')
+            # cv2.waitKey(1)
+    print(all_categories.difference(current_indices))

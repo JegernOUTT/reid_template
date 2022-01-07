@@ -24,8 +24,9 @@ class CurricularFace(SoftmaxLossMixin, torch.nn.Module):
                  out_features,
                  m=0.5,
                  s=64.,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
-        super(CurricularFace, self).__init__()
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
+        torch.nn.Module.__init__(self)
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.in_features = in_features
         self.out_features = out_features

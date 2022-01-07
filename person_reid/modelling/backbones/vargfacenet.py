@@ -131,11 +131,11 @@ class HeadSetting(nn.Module):
 
 
 class VarGFaceNet(nn.Module):
-    def __init__(self):
+    def __init__(self, input_channels=3):
         super(VarGFaceNet, self).__init__()
         S = 8
         self.conv1 = nn.Sequential(
-            nn.Conv2d(in_channels=3, out_channels=40, kernel_size=3, stride=1, padding=1, bias=False),
+            nn.Conv2d(in_channels=input_channels, out_channels=40, kernel_size=3, stride=1, padding=1, bias=False),
             nn.BatchNorm2d(40),
             # nn.ReLU6(inplace=True)
             nn.ReLU6(inplace=False)

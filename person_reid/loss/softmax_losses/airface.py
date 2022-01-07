@@ -22,7 +22,8 @@ class AirFace(SoftmaxLossMixin, torch.nn.Module):
                  out_features,
                  s=64.,
                  m=0.45,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         super(AirFace, self).__init__()
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.classnum = out_features

@@ -4,13 +4,13 @@ from dssl_dl_utils import Size2D
 
 seed = 42
 gpus = [0]
-batch_size = 256
+batch_size = 128
 epochs = 300
 image_size = Size2D(96, 192)
 num_workers = 16 // len(gpus)
 backbone_max_stride = 16
 backbone_features_number = 256
-reid_features_number = 256
+reid_features_number = 1024
 data_base_path = Path('/media/svakhreev/fast/person_reid')
 
 
@@ -58,24 +58,23 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
     return dict(
         type='KeypointsMaskPersonReid',
         # Model agnostic parameters
-        backbone_cfg=dict(type='MobileFaceNet', input_channels=21),
+        backbone_cfg=dict(type='GhostNet', input_channels=21),
         head_cfg=dict(
-            type='GDC',
-            input_channels=backbone_features_number,
+            type='VarGFaceNetHead',
             reid_features_number=reid_features_number,
             input_conv_kernel_size=(image_size.height // backbone_max_stride,
                                     image_size.width // backbone_max_stride)
         ),
         # Batch data miner agnostic parameters
-        miner_distance_cfg=dict(type='LpDistance', p=2, power=1),
-        miner_cfg=dict(type='BatchHardMiner'),
+        miner_distance_cfg=None,
+        miner_cfg=None,
 
         # Loss stuff agnostic parameters
-        loss_distance_cfg=dict(type='LpDistance', p=2, power=1),
+        loss_distance_cfg=None,
         loss_regularizer_cfg=None,
         loss_reducer_cfg=None,
-        loss_cfg=dict(type='TripletMarginLoss', name='triplet', margin=0.05, swap=False,
-                      smooth_loss=False, triplets_per_anchor="all"),
+        loss_cfg=dict(type='CurricularFace', name='sphere2', loss_dict=dict(type='FocalLoss'),
+                      in_features=reid_features_number, out_features=train_num_classes),
 
         # Optimization stuff agnostic parameters
         optimizer_cfg=dict(

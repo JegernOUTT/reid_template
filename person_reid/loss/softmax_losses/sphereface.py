@@ -19,7 +19,8 @@ class SphereFace(SoftmaxLossMixin, torch.nn.Module):
                  in_features,
                  out_features,
                  m=4.0,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         super(SphereFace, self).__init__()
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.in_features = in_features
@@ -84,7 +85,8 @@ class SphereProduct2(torch.nn.Module):
         cos(m*theta)
     """
 
-    def __init__(self, in_features, out_features, lamb=0.7, r=30, m=0.4, t=3, b=0.25):
+    def __init__(self, in_features, out_features, lamb=0.7, r=30, m=0.4, t=3, b=0.25,
+                 *args, **kwargs):
         super(SphereProduct2, self).__init__()
         self.in_features = in_features
         self.out_features = out_features

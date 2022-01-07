@@ -10,7 +10,8 @@ class MarginSoftmax(SoftmaxLossMixin, nn.Module):
     def __init__(self,
                  s=64.0,
                  m=0.40,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         super(MarginSoftmax, self).__init__()
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.s = s

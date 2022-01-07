@@ -186,14 +186,14 @@ class AttentionModule_stage3(nn.Module):
 
 
 class Backbone56(nn.Module):
-    def __init__(self, num_layers, mode='ir'):
+    def __init__(self, num_layers, mode='ir', input_channels=3):
         super(Backbone56, self).__init__()
         assert num_layers == 56, "num_layers should be 56"
         if mode == 'ir':
             ResidualBlock = bottleneck_IR
         elif mode == 'ir_se':
             ResidualBlock = bottleneck_IR_SE
-        self.input_layer = Sequential(Conv2d(3, 64, (3, 3), 1, 1, bias=False),
+        self.input_layer = Sequential(Conv2d(input_channels, 64, (3, 3), 1, 1, bias=False),
                                       BatchNorm2d(64),
                                       PReLU(64))
         self.residual_block1 = ResidualBlock(64, 64, 2)
@@ -240,14 +240,14 @@ class Backbone56(nn.Module):
 
 
 class Backbone92(nn.Module):
-    def __init__(self, num_layers, mode='ir'):
+    def __init__(self, num_layers, mode='ir', input_channels=3):
         super(Backbone92, self).__init__()
         assert num_layers == 92, "num_layers should be 92"
         if mode == 'ir':
             ResidualBlock = bottleneck_IR
         elif mode == 'ir_se':
             ResidualBlock = bottleneck_IR_SE
-        self.input_layer = Sequential(Conv2d(3, 64, (3, 3), 1, 1, bias=False),
+        self.input_layer = Sequential(Conv2d(input_channels, 64, (3, 3), 1, 1, bias=False),
                                       BatchNorm2d(64),
                                       PReLU(64))
         self.residual_block1 = ResidualBlock(64, 64, 2)
@@ -300,20 +300,20 @@ class Backbone92(nn.Module):
 
 
 class AttentionNetIR56(Backbone56):
-    def __init__(self):
-        super().__init__(56, 'ir')
+    def __init__(self, input_channels=3):
+        super().__init__(56, 'ir', input_channels=input_channels)
 
 
 class AttentionNetIRSE56(Backbone56):
-    def __init__(self):
-        super().__init__(56, 'ir_se')
+    def __init__(self, input_channels=3):
+        super().__init__(56, 'ir_se', input_channels=input_channels)
 
 
 class AttentionNetIR92(Backbone92):
-    def __init__(self):
-        super().__init__(92, 'ir')
+    def __init__(self, input_channels=3):
+        super().__init__(92, 'ir', input_channels=input_channels)
 
 
 class AttentionNetIRSE92(Backbone92):
-    def __init__(self):
-        super().__init__(92, 'ir_se')
+    def __init__(self, input_channels=3):
+        super().__init__(92, 'ir_se', input_channels=input_channels)

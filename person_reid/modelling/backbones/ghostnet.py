@@ -208,13 +208,13 @@ cfgs = [
 
 
 class GhostNet(nn.Module):
-    def __init__(self, width=1.3):
+    def __init__(self, input_channels=3, width=1.3):
         super(GhostNet, self).__init__()
         self.cfgs = cfgs
 
         # building first layer
         output_channel = _make_divisible(16 * width, 4)
-        self.conv_stem = nn.Conv2d(3, output_channel, 3, 1, 1, bias=False)
+        self.conv_stem = nn.Conv2d(input_channels, output_channel, 3, 1, 1, bias=False)
         self.bn1 = nn.BatchNorm2d(output_channel)
         self.act1 = nn.PReLU(output_channel)
         input_channel = output_channel

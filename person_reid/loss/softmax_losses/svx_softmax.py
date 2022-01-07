@@ -29,7 +29,8 @@ class SVXSoftmax(SoftmaxLossMixin, torch.nn.Module):
                  m=0.35,
                  t=0.2,
                  easy_margin=False,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         super(SVXSoftmax, self).__init__()
         SoftmaxLossMixin.__init__(self, loss_dict)
 

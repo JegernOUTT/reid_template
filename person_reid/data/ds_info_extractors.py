@@ -99,7 +99,7 @@ class DDDPes:
 
     @staticmethod
     def persons_count():
-        return 204
+        return 193
 
     @staticmethod
     def cameras_count():
@@ -187,7 +187,7 @@ class DukeMTMC:
 
     @staticmethod
     def persons_count():
-        return 7140
+        return 1812
 
     @staticmethod
     def cameras_count():
@@ -210,7 +210,7 @@ class ETH:
     CAM_OFFSETS = {
         1: 0,
         2: 83,
-        3: 35,
+        3: 83 + 35,
     }
 
     @staticmethod
@@ -529,10 +529,10 @@ class CUHK02:
     IDX = 18
     SCENE_OFFSETS = {
         'P1': 0,
-        'P2': 973,
-        'P3': 973 + 306,
-        'P4': 973 + 306 + 107,
-        'P5': 973 + 306 + 107 + 193,
+        'P2': 971,
+        'P3': 971 + 306,
+        'P4': 971 + 306 + 107,
+        'P5': 971 + 306 + 107 + 193,
     }
 
     @staticmethod
@@ -541,7 +541,7 @@ class CUHK02:
 
     @staticmethod
     def persons_count():
-        return 1818
+        return 1816
 
     @staticmethod
     def cameras_count():
@@ -600,7 +600,7 @@ class MARS:
 
     @staticmethod
     def persons_count():
-        return 1500
+        return 1259
 
     @staticmethod
     def cameras_count():
@@ -608,9 +608,9 @@ class MARS:
 
     @staticmethod
     def extract(path: str):
-        key = path.split('/')[-1]
-        person_idx = int(key[:4])
-        cam_idx = int(key[5])
+        key = path.split('/')
+        person_idx = int(key[-2])
+        cam_idx = int(key[-1][5])
         return {
             '_dataset_idx': MARS.IDX,
             '_person_idx': person_idx - 1,
@@ -623,14 +623,14 @@ class UnrealPerson:
     IDX = 21
     MODEL_TYPE_OFFSETS = {
         1: 0,
-        2: 2800,
-        3: 2000
+        2: 2799,
+        3: 2799 + 2000
     }
     SCENE_TYPE_OFFSETS = {
         1: 0,  # [1 - 6]
         2: 6,  # [1 - 16]
-        3: 16,  # [23 - 28]
-        4: 6  # [1 - 6]
+        3: 6 + 16,  # [23 - 28]
+        4: 6 + 16 + 6  # [1 - 6]
     }
 
     @staticmethod
@@ -639,7 +639,7 @@ class UnrealPerson:
 
     @staticmethod
     def persons_count():
-        return 6800
+        return 6799
 
     @staticmethod
     def cameras_count():
@@ -675,7 +675,7 @@ class CUHKSYSU:
 
     @staticmethod
     def persons_count():
-        return 11934
+        return 11930
 
     @staticmethod
     def cameras_count():
@@ -702,7 +702,7 @@ class GRID:
 
     @staticmethod
     def persons_count():
-        return 256
+        return 250
 
     @staticmethod
     def cameras_count():
@@ -730,7 +730,7 @@ class PRAI1581:
 
     @staticmethod
     def persons_count():
-        return 1581
+        return 1580
 
     @staticmethod
     def cameras_count():
@@ -785,7 +785,7 @@ class RPIField:
 
     @staticmethod
     def persons_count():
-        return 15107
+        return 4108
 
     @staticmethod
     def cameras_count():
@@ -794,7 +794,7 @@ class RPIField:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-2].split('_')[0])
+        person_idx = int(key[-2])
         cam_idx = int(key[-3][4:])
         return {
             '_dataset_idx': RPIField.IDX,
@@ -809,12 +809,12 @@ class LPW:
     PERSON_SCENE_OFFSETS = {
         0: 0,
         1: 756,
-        2: 1751
+        2: 756 + 1751
     }
     CAMERA_SCENE_OFFSETS = {
         0: 0,
         1: 3,
-        2: 4
+        2: 3 + 4
     }
 
     @staticmethod
@@ -897,3 +897,27 @@ def extract_ds_metadata(path: Union[Path, str]):
     assert extracted['_cam_idx'] >= 0 or extracted['_cam_idx'] < extractor.cameras_count(), \
         f'Check {extractor.__name__} extractor validity'
     return extracted
+
+
+if __name__ == '__main__':
+    def _expose_metadata(data):
+        data.update(extract_ds_metadata(data['__key__']))
+        return data
+
+
+    import webdataset, pickle
+    from tqdm import tqdm
+
+    path = Path('/media/svakhreev/fast/person_reid/train/last.tar')
+    dataset = (webdataset.WebDataset(str(path))
+               .select(lambda x: 'jpg' in x or 'png' in x or 'jpeg' in x)
+               .select(lambda x: pickle.loads(x['pickle']).bbox is not None)
+               .select(lambda x: pickle.loads(x['pickle']).keypoint_graph is not None)
+               .map(_expose_metadata))
+
+    all_categories = set(range(Last.persons_count()))
+    gathered_categories = set()
+    for item in tqdm(dataset):
+        gathered_categories.add(item['_person_idx'])
+
+    print(all_categories.difference(gathered_categories))

@@ -91,14 +91,14 @@ class SoftmaxLossMixin(nn.Module):
         'SmoothingFocalLoss': SmoothingFocalLoss,
     }
     DEFAULT_LOSS = {
-        'name': 'CrossEntropyLoss'
+        'type': 'CrossEntropyLoss'
     }
 
     def __init__(self, loss_dict: Dict[str, Any]):
         super().__init__()
-        assert 'name' in loss_dict and loss_dict['name'] in SoftmaxLossMixin.LOSSES
-        name = loss_dict.pop('name')
+        assert 'type' in loss_dict and loss_dict['type'] in SoftmaxLossMixin.LOSSES
+        name = loss_dict.pop('type')
         self.loss = SoftmaxLossMixin.LOSSES[name](**loss_dict)
 
     def _calc_loss(self, pred, target):
-        return self.loss(pred, target.view(-1, 1).long())
+        return self.loss(pred, target.view(-1, ).long())

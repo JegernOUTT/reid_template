@@ -10,7 +10,7 @@ class VarGFaceNetHead(torch.nn.Module):
             torch.nn.Conv2d(input_channels, 1024, kernel_size=1, stride=1, padding=0, bias=False),
             torch.nn.BatchNorm2d(1024),
             torch.nn.ReLU6(inplace=False),
-            torch.nn.Conv2d(1024, 1024, (input_conv_kernel_size, input_conv_kernel_size),
+            torch.nn.Conv2d(1024, 1024, input_conv_kernel_size,
                             1, padding=0, groups=1024 // 8, bias=False),
             torch.nn.Conv2d(1024, 512, 1, 1, padding=0, groups=512, bias=False)
         )

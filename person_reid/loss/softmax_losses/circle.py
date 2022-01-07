@@ -11,7 +11,8 @@ class Circle(SoftmaxLossMixin, torch.nn.Module):
                  out_features,
                  m=0.25,
                  gamma=256,
-                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS):
+                 loss_dict=SoftmaxLossMixin.DEFAULT_LOSS,
+                 *args, **kwargs):
         super(Circle, self).__init__()
         SoftmaxLossMixin.__init__(self, loss_dict)
         self.margin = m
