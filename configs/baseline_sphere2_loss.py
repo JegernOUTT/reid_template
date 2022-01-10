@@ -55,9 +55,9 @@ def trainer_cfg(train_num_classes, **kwargs):
 
 def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
     return dict(
-        type='KeypointsMaskPersonReid',
+        type='BaselinePersonReid',
         # Model agnostic parameters
-        backbone_cfg=dict(type='OSNET_AIN_x0_75', input_channels=21),
+        backbone_cfg=dict(type='OSNET_AIN_x0_75'),
         head_cfg=dict(
             type='GDC',
             reid_features_number=reid_features_number,

@@ -81,7 +81,7 @@ class ModuleBuilders:
                    loss_distance_cfg: CfgT,
                    loss_regularizer_cfg: CfgT,
                    loss_reducer_cfg: CfgT,
-                   loss_cfg: CfgT) -> Tuple[str, torch.nn.Module]:
+                   loss_cfg: CfgT) -> torch.nn.Module:
         from person_reid.utils.builders import (build_distance, build_loss_regularizer,
                                                 build_loss_reducer, build_loss)
         loss_cfg.update({
@@ -89,13 +89,14 @@ class ModuleBuilders:
             'embedding_regularizer': build_loss_regularizer(loss_regularizer_cfg),
             'reducer': build_loss_reducer(loss_reducer_cfg)
         })
-        return loss_name, build_loss(loss_cfg)
+        loss = build_loss(loss_cfg)
+        loss.name = loss_name
+        return loss
 
     @staticmethod
-    def build_metric(metric_name: str,
-                     metric_cfg: CfgT):
+    def build_metric(metric_cfg: CfgT) -> torch.nn.Module:
         from person_reid.utils.builders import build_metric
-        return metric_name, build_metric(metric_cfg)
+        return build_metric(metric_cfg)
 
     @staticmethod
     def build_models(backbone_cfg: CfgT,
@@ -121,7 +122,6 @@ class ModuleBuilders:
 
 class ModuleBaseMixin:
     def _register_module_list(self, module_list):
-        for name, *modules in module_list:
-            for module in modules:
-                module_type_name = type(module).__name__.lower()
-                self.__setattr__(f'{name}_{module_type_name}', module)
+        for module in module_list:
+            module_type_name = type(module).__name__.lower()
+            self.__setattr__(module_type_name, module)

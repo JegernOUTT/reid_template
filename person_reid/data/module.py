@@ -25,7 +25,8 @@ class DataModule(pl.LightningDataModule):
                  val_paths: List[Path],
                  image_size: Size2D,
                  sampler: Any,
-                 full_resample: True,
+                 full_resample: bool,
+                 batch_shuffle: bool = True,
                  with_keypoints_and_masks: bool = True,
                  batch_size: int = 128,
                  **loader_kwargs):
@@ -39,6 +40,7 @@ class DataModule(pl.LightningDataModule):
         self._image_size = image_size
         self._sampler = build_sampler(sampler)
         self._full_resample = full_resample
+        self._batch_shuffle = batch_shuffle
         self._with_keypoints_and_masks = with_keypoints_and_masks
         self._batch_size = batch_size
         self._loader_kwargs = loader_kwargs
@@ -156,7 +158,7 @@ class DataModule(pl.LightningDataModule):
         if mode == 'train':
             overall_length = self._train_overall_length
             dataset = (self._build_ds(self._train_paths, True, True, shardshuffle=True)
-                       .shuffle(self._batch_size)
+                       .shuffle(self._batch_size if self._batch_shuffle else 0)
                        .decode(webdataset.handle_extension("jpg", jpg_decoder),
                                webdataset.handle_extension("jpeg", jpeg_decoder),
                                webdataset.handle_extension("png", png_decoder))
@@ -171,7 +173,6 @@ class DataModule(pl.LightningDataModule):
                        .decode(webdataset.handle_extension("jpg", jpg_decoder),
                                webdataset.handle_extension("jpeg", jpeg_decoder),
                                webdataset.handle_extension("png", png_decoder))
-                       .map(self._expose_metadata)
                        .map(partial(self._recalculate_indexes, mode))
                        .map(make_crop_and_resize(self._image_size, self._with_keypoints_and_masks))
                        .select(lambda x: x['valid'])
@@ -193,6 +194,9 @@ class DataModule(pl.LightningDataModule):
 
     def val_dataloader(self, *args, **kwargs) -> Union[DataLoader, List[DataLoader]]:
         return self._make_dataloader('val')
+
+    def test_dataloader(self):
+        return self.val_dataloader()
 
     def person_categories_count(self, mode):
         ds_indexes = self._train_ds_indexes if mode == 'train' else self._val_ds_indexes
@@ -250,13 +254,14 @@ if __name__ == '__main__':
     import cv2
 
     base_path = Path('/media/svakhreev/fast/person_reid/')
-    batch_size = 128
+    batch_size = 256
     train_paths = [p for p in (base_path / 'train').iterdir() if p.suffix == '.tar']
     data = DataModule(train_paths=train_paths,
                       val_paths=[base_path / 'test/last_test.tar'],
                       sampler=dict(type='PersonSampler', output_path=base_path / 'train_shards'),
                       full_resample=False,
-                      image_size=Size2D(128, 256),
+                      batch_shuffle=False,
+                      image_size=Size2D(96, 192),
                       with_keypoints_and_masks=True,
                       batch_size=batch_size,
                       num_workers=4,
@@ -274,21 +279,18 @@ if __name__ == '__main__':
     train_data = data.train_dataloader()
     cv2.namedWindow('image', flags=cv2.WINDOW_KEEPRATIO)
     all_categories = set(range(data.person_categories_count("train")))
-    current_indices = set()
     for item in tqdm(train_data):
         for i in range(batch_size):
-            current_indices.add(item["person_idx"][i].item())
-            # image = cv2.cvtColor(item['image'][i].cpu().numpy(), cv2.COLOR_RGB2BGR)
-            # for x, y in item['keypoints'][i].cpu().numpy():
-            #     cv2.circle(image, (int(x), int(y)), 2, (0, 255, 0), 3)
-            #
-            # mask = item['mask'][i].cpu().numpy()[..., None].repeat(3, 2)
-            # image = np.hstack([image, mask])
-            #
-            # cv2.imshow('image', image)
-            # print(f'Dataset index: {DATASETS_EXTRACTORS[item["dataset_idx"][i].item()].__name__}')
-            # print(f'Person index: {item["person_idx"][i].item()}')
-            # print(f'Camera index: {item["cam_idx"][i].item()}')
-            # print(f'Clothes index: {item["clothes_idx"][i].item()}\n\n')
-            # cv2.waitKey(1)
-    print(all_categories.difference(current_indices))
+            image = cv2.cvtColor(item['image'][i].cpu().numpy(), cv2.COLOR_RGB2BGR)
+            for x, y in item['keypoints'][i].cpu().numpy():
+                cv2.circle(image, (int(x), int(y)), 2, (0, 255, 0), 3)
+
+            mask = item['mask'][i].cpu().numpy()[..., None].repeat(3, 2)
+            image = np.hstack([image, mask])
+
+            cv2.imshow('image', image)
+            print(f'Dataset index: {DATASETS_EXTRACTORS[item["dataset_idx"][i].item()].__name__}')
+            print(f'Person index: {item["person_idx"][i].item()}')
+            print(f'Camera index: {item["cam_idx"][i].item()}')
+            print(f'Clothes index: {item["clothes_idx"][i].item()}\n\n')
+            cv2.waitKey(1)

@@ -9,8 +9,7 @@ epochs = 300
 image_size = Size2D(96, 192)
 num_workers = 16 // len(gpus)
 backbone_max_stride = 16
-backbone_features_number = 256
-reid_features_number = 256
+reid_features_number = 512
 data_base_path = Path('/media/svakhreev/fast/person_reid')
 
 
@@ -37,7 +36,7 @@ def trainer_cfg(train_num_classes, **kwargs):
         callbacks=[
             dict(type='LearningRateMonitor', logging_interval='step'),
             dict(type='ModelCheckpoint', save_top_k=5, verbose=True, mode='max',
-                 monitor='rank_1', dirpath='./checkpoints/', filename='{epoch:02d}_{rank_1:.2f}')
+                 monitor='accuracy_1_min', dirpath='./checkpoints/', filename='{epoch:02d}_{accuracy_1_min:.2f}')
         ],
         benchmark=True,
         deterministic=True,
@@ -45,7 +44,7 @@ def trainer_cfg(train_num_classes, **kwargs):
         precision=16,
         sync_batchnorm=True,
         strategy='ddp_find_unused_parameters_false',
-        check_val_every_n_epoch=10,
+        check_val_every_n_epoch=5,
         wandb_logger=dict(
             name=f'{Path(__file__).stem}_{image_size.width}x{image_size.height}'
                  f'_bs{batch_size}_ep{epochs}_cls{train_num_classes}',
@@ -58,10 +57,9 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
     return dict(
         type='BaselinePersonReid',
         # Model agnostic parameters
-        backbone_cfg=dict(type='MobileFaceNet'),
+        backbone_cfg=dict(type='OSNET_AIN_x0_75'),
         head_cfg=dict(
             type='GDC',
-            input_channels=backbone_features_number,
             reid_features_number=reid_features_number,
             input_conv_kernel_size=(image_size.height // backbone_max_stride,
                                     image_size.width // backbone_max_stride)
@@ -87,7 +85,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         scheduler_cfg=dict(
             type='CyclicLR',
             base_lr=1e-5 * len(gpus),
-            max_lr=1e-2 * len(gpus),
+            max_lr=1e-3 * len(gpus),
             step_size_up=int(train_dataset_len // batch_size * (epochs * 0.1)),
             mode='triangular2',
             cycle_momentum=False,

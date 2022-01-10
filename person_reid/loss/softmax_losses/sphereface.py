@@ -85,8 +85,7 @@ class SphereProduct2(torch.nn.Module):
         cos(m*theta)
     """
 
-    def __init__(self, in_features, out_features, lamb=0.7, r=30, m=0.4, t=3, b=0.25,
-                 *args, **kwargs):
+    def __init__(self, in_features, out_features, lamb=0.7, r=30, m=0.4, t=3, *args, **kwargs):
         super(SphereProduct2, self).__init__()
         self.in_features = in_features
         self.out_features = out_features
@@ -94,32 +93,28 @@ class SphereProduct2(torch.nn.Module):
         self.r = r
         self.m = m
         self.t = t
-        self.b = b
         self.weight = torch.nn.Parameter(torch.FloatTensor(out_features, in_features))
+        self.b = torch.nn.Parameter(torch.FloatTensor(out_features))
         torch.nn.init.xavier_uniform(self.weight)
-
-        # duplication formula
-        self.mlambda = [
-            lambda x: 2 * ((x + 1) / 2) ** self.t - 1,
-        ]
+        torch.nn.init.constant_(self.b, 0.25)
 
     def forward(self, input, label, *args, **kwargs):
-        # --------------------------- cos(theta) & phi(theta) ---------------------------
-        cos_theta = F.linear(F.normalize(input), F.normalize(self.weight))
-        cos_theta = cos_theta.clamp(-1, 1)
-        cos_m_theta = self.r * (self.mlambda[0](cos_theta) - self.m) + self.b
-        cos_m_theta1 = self.r * (self.mlambda[0](cos_theta) + self.m) + self.b
-        cos_p_theta = (self.lamb / self.r) * torch.log(1 + torch.exp(-cos_m_theta))
+        def _g_func(x):
+            return 2. * ((x + 1.) / 2.) ** self.t - 1.
 
-        cos_n_theta = ((1 - self.lamb) / self.r) * torch.log(1 + torch.exp(cos_m_theta1))
+        # --------------------------- cos(theta) & phi(theta) ---------------------------
+        cos_theta = F.linear(F.normalize(input), F.normalize(self.weight)).clamp(-1, 1)
+        pos_part = self.r * (_g_func(cos_theta) - self.m) + self.b
+        neg_part = self.r * (_g_func(cos_theta) + self.m) + self.b
+        cos_pos_theta = (self.lamb / self.r) * torch.log(1 + torch.exp(-pos_part))
+        cos_neg_theta = ((1 - self.lamb) / self.r) * torch.log(1 + torch.exp(neg_part))
 
         # --------------------------- convert label to one-hot ---------------------------
-        one_hot = torch.zeros(cos_theta.size())
-        one_hot = one_hot.cuda() if cos_theta.is_cuda else one_hot
-        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        one_hot = torch.zeros(cos_theta.size(), dtype=cos_pos_theta.dtype, device=cos_pos_theta.device)
+        one_hot.scatter_(1, label.view(-1, 1), 1)
 
         # --------------------------- Calculate output ---------------------------
-        loss = (one_hot * cos_p_theta) + (1 - one_hot) * cos_n_theta
+        loss = (one_hot * cos_pos_theta) + (1 - one_hot) * cos_neg_theta
         loss = loss.sum(dim=1)
 
         return loss.mean()

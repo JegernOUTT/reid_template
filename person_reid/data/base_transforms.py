@@ -10,7 +10,6 @@ from dssl_dl_utils.utils.image import read_image
 __all__ = ['make_crop_and_resize']
 
 
-
 class LetterPackResize(A.DualTransform):
     def __init__(self,
                  width: int, height: int,
@@ -52,15 +51,18 @@ class LetterPackResize(A.DualTransform):
 
 
 def jpg_decoder(data):
-    return read_image(data)
+    buf = np.ndarray(shape=(1, len(data)), dtype=np.uint8, buffer=data)
+    return cv2.cvtColor(cv2.imdecode(buf, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
 
 
 def jpeg_decoder(data):
-    return read_image(data)
+    buf = np.ndarray(shape=(1, len(data)), dtype=np.uint8, buffer=data)
+    return cv2.cvtColor(cv2.imdecode(buf, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
 
 
 def png_decoder(data):
-    return read_image(data)
+    buf = np.ndarray(shape=(1, len(data)), dtype=np.uint8, buffer=data)
+    return cv2.cvtColor(cv2.imdecode(buf, cv2.IMREAD_COLOR), cv2.COLOR_BGR2RGB)
 
 
 def make_crop_and_resize(image_size: Size2D, with_keypoints_and_masks: bool = False):
