@@ -80,7 +80,7 @@ class KeypointsMaskPersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin
         images = self.masks_keypoints_concat(self.val_transforms(images), masks, keypoints)
         embeddings = self.forward(images)
         for metric in self.metrics:
-            metric(embeddings, gt_labels, is_db=~is_query)
+            metric(embeddings, gt_labels, is_query=is_query)
 
     def validation_epoch_end(self, outputs):
         from person_reid.metrics.utils import is_numeric_metric
