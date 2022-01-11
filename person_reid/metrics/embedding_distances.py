@@ -54,3 +54,7 @@ class EmbeddingsDistances(Metric):
             'class_distance_difference': mean_intra_class_distance - mean_inter_class_distance,
             'inter_class_hist': plot_intra_inter_hist(inter_class_distances, intra_class_distances)
         }
+
+    def reset(self):
+        self.embeddings.clear()
+        self.labels.clear()

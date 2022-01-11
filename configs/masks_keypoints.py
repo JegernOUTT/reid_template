@@ -5,7 +5,7 @@ from dssl_dl_utils import Size2D
 seed = 42
 gpus = [0]
 batch_size = 256
-epochs = 300
+epochs = 100
 image_size = Size2D(96, 192)
 num_workers = 16 // len(gpus)
 backbone_max_stride = 16
@@ -85,7 +85,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         scheduler_cfg=dict(
             type='CyclicLR',
             base_lr=1e-5 * len(gpus),
-            max_lr=1e-3 * len(gpus),
+            max_lr=5e-4 * len(gpus),
             step_size_up=int(train_dataset_len // batch_size * (epochs * 0.1)),
             mode='triangular2',
             cycle_momentum=False,

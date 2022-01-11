@@ -87,6 +87,7 @@ class KeypointsMaskPersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin
 
         for metric in self.metrics:
             output = metric.compute()
+            metric.reset()
             for name, value in output.items():
                 if is_numeric_metric(value):
                     self.log(name, value, prog_bar=True, on_epoch=True, logger=True)

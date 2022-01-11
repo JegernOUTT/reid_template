@@ -114,3 +114,9 @@ class ConfusionMetrics(Metric):
         output[f'cmc_mean'] = plot_cmc_line_plot(mean_metrics_by_rank)
 
         return output
+
+    def reset(self):
+        self.query_embeddings.clear()
+        self.query_labels.clear()
+        self.gallery_embeddings.clear()
+        self.gallery_labels.clear()
