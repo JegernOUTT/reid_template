@@ -72,8 +72,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         loss_distance_cfg=dict(type='LpDistance', p=2, power=1),
         loss_regularizer_cfg=None,
         loss_reducer_cfg=None,
-        loss_cfg=dict(type='TripletMarginLoss', name='triplet', margin=0.05, swap=False,
-                      smooth_loss=False, triplets_per_anchor="all"),
+        loss_cfg=dict(type='GeneralizedLiftedStructureLoss', name='triplet'),
 
         # Optimization stuff agnostic parameters
         optimizer_cfg=dict(

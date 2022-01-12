@@ -57,7 +57,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
     return dict(
         type='BaselinePersonReid',
         # Model agnostic parameters
-        backbone_cfg=dict(type='OSNET_AIN_x0_75'),
+        backbone_cfg=dict(type='OSNET_AIN_x1_0'),
         head_cfg=dict(
             type='GDC',
             reid_features_number=reid_features_number,
@@ -65,15 +65,16 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
                                     image_size.width // backbone_max_stride)
         ),
         # Batch data miner agnostic parameters
-        miner_distance_cfg=dict(type='LpDistance', p=2, power=1),
-        miner_cfg=dict(type='BatchHardMiner'),
+        miner_distance_cfg=None,
+        miner_cfg=None,
 
         # Loss stuff agnostic parameters
-        loss_distance_cfg=dict(type='LpDistance', p=2, power=1),
+        loss_distance_cfg=None,
         loss_regularizer_cfg=None,
         loss_reducer_cfg=None,
-        loss_cfg=dict(type='TripletMarginLoss', name='triplet', margin=0.05, swap=False,
-                      smooth_loss=False, triplets_per_anchor="all"),
+        loss_cfg=dict(type='CurricularFace', name='curricular',
+                      in_features=reid_features_number, out_features=train_num_classes,
+                      loss_dict=dict(type='SmoothingFocalLoss')),
 
         # Optimization stuff agnostic parameters
         optimizer_cfg=dict(
@@ -85,7 +86,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         scheduler_cfg=dict(
             type='CyclicLR',
             base_lr=1e-5 * len(gpus),
-            max_lr=1e-3 * len(gpus),
+            max_lr=5e-4 * len(gpus),
             step_size_up=int(train_dataset_len // batch_size * (epochs * 0.1)),
             mode='triangular2',
             cycle_momentum=False,

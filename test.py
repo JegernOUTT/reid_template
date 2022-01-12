@@ -44,7 +44,7 @@ def main():
     main_module.load_state_dict(state_dict, strict=True)
     main_module.eval()
 
-    trainer = Trainer(**build_params_for_trainer(args, trainer_cfg, main_module))
+    trainer = Trainer(**build_params_for_trainer(args, trainer_cfg, main_module, with_wandb=False))
     trainer.test(main_module, datamodule=data_module)
 
 

@@ -847,6 +847,40 @@ class LPW:
         }
 
 
+class SYSU30KTest:
+    IDX = 28
+    PERSON_OFFSET = 28311
+
+    @staticmethod
+    def name():
+        return 'sysu30k_test'
+
+    @staticmethod
+    def persons_count():
+        return 1001
+
+    @staticmethod
+    def cameras_count():
+        return 0
+
+    @staticmethod
+    def extract(path: str):
+        key = path.split('/')
+        is_query = 'query' in path
+        if key[-2] == '0000others':
+            person_idx = 1000
+        else:
+            person_idx = int(key[-2]) - SYSU30KTest.PERSON_OFFSET
+
+        return {
+            '_dataset_idx': SYSU30KTest.IDX,
+            '_is_query': is_query,
+            '_person_idx': person_idx,
+            '_cam_idx': IGNORE_VALUE,
+            '_clothes_idx': IGNORE_VALUE
+        }
+
+
 DATASETS_EXTRACTORS = {
     Market1501.IDX: Market1501,
     Last.IDX: Last,
@@ -876,6 +910,7 @@ DATASETS_EXTRACTORS = {
     WildtrackDataset.IDX: WildtrackDataset,
     RPIField.IDX: RPIField,
     LPW.IDX: LPW,
+    SYSU30KTest.IDX: SYSU30KTest
 }
 
 DB_EXTRACTORS_PER_DS_NAME = {
@@ -904,18 +939,21 @@ if __name__ == '__main__':
         data.update(extract_ds_metadata(data['__key__']))
         return data
 
-
     import webdataset, pickle
     from tqdm import tqdm
 
-    path = Path('/media/svakhreev/fast/person_reid/train/last.tar')
-    dataset = (webdataset.WebDataset(str(path))
+    paths = [
+        str(p)
+        for p in Path('/media/svakhreev/fast/person_reid/test/').iterdir()
+        if p.name.startswith('sysu') and p.suffix == '.tar'
+    ]
+    dataset = (webdataset.WebDataset(paths)
                .select(lambda x: 'jpg' in x or 'png' in x or 'jpeg' in x)
                .select(lambda x: pickle.loads(x['pickle']).bbox is not None)
                .select(lambda x: pickle.loads(x['pickle']).keypoint_graph is not None)
                .map(_expose_metadata))
 
-    all_categories = set(range(Last.persons_count()))
+    all_categories = set(range(SYSU30KTest.persons_count()))
     gathered_categories = set()
     for item in tqdm(dataset):
         gathered_categories.add(item['_person_idx'])

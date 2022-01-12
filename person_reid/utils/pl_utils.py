@@ -25,17 +25,20 @@ def retrieve_data_module_info(data_module):
     )
 
 
-def build_params_for_trainer(args, trainer_cfg, lightning_module):
+def build_params_for_trainer(args, trainer_cfg, lightning_module, with_wandb=True):
     if 'callbacks' in trainer_cfg:
         trainer_cfg['callbacks'] = [
             build_callbacks(config)
             for config in trainer_cfg['callbacks']
         ]
-    logger = WandbLogger(**trainer_cfg.pop('wandb_logger'))
-    logger.watch(lightning_module)
+    wandb_kwargs = trainer_cfg.pop('wandb_logger')
+    if not with_wandb:
+        wandb_kwargs['mode'] = 'disabled'
+    trainer_cfg['logger'] = WandbLogger(**wandb_kwargs)
+    trainer_cfg['logger'].watch(lightning_module)
     if rank_zero_only.rank == 0:
         wandb.save(str(args.config))
-    return dict(logger=[logger], **trainer_cfg)
+    return trainer_cfg
 
 
 def save_best_checkpoint(trainer_cfg):

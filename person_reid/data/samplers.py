@@ -18,8 +18,8 @@ def default_intra_person_sampler(images, images_per_person=12, **kwargs):
     from person_reid.data.ds_info_extractors import extract_ds_metadata, IGNORE_VALUE
 
     images_metadata = [extract_ds_metadata(os.path.splitext(img.name)[0]) for img in images]
-    images = [img for img, metadata in zip(images, images_metadata)
-              if metadata['_clothes_idx'] in {IGNORE_VALUE, 0}]
+    # images = [img for img, metadata in zip(images, images_metadata)
+    #           if metadata['_clothes_idx'] in {IGNORE_VALUE, 0}]
 
     if len(images) < images_per_person:
         selected_images = images
