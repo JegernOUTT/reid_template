@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Tuple
 
 import kornia.augmentation as KA
 import torch
+import torch.nn.functional as F
 
 __all__ = ['ModuleBaseMixin', 'OnnxFreezable', 'KorniaAugmentations', 'ModuleBuilders', 'CfgT']
 
@@ -13,7 +14,7 @@ class OnnxFreezable(ABC):
     def forward_postprocess(self, x):
         x = self.backbone(x)
         x = self.head(x)
-        return x
+        return F.normalize(x, dim=1)
 
     @property
     def output_names(self) -> List:

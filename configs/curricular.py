@@ -4,12 +4,12 @@ from dssl_dl_utils import Size2D
 
 seed = 42
 gpus = [0]
-batch_size = 256
+batch_size = 128
 epochs = 100
 image_size = Size2D(96, 192)
 num_workers = 16 // len(gpus)
 backbone_max_stride = 16
-reid_features_number = 512
+reid_features_number = 1024
 data_base_path = Path('/media/svakhreev/fast/person_reid')
 
 
@@ -74,7 +74,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         loss_reducer_cfg=None,
         loss_cfg=dict(type='CurricularFace', name='curricular',
                       in_features=reid_features_number, out_features=train_num_classes,
-                      loss_dict=dict(type='SmoothingFocalLoss')),
+                      loss_dict=dict(type='LabelSmoothCrossEntropyLoss', classes=train_num_classes)),
 
         # Optimization stuff agnostic parameters
         optimizer_cfg=dict(

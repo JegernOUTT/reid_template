@@ -73,7 +73,7 @@ class SmoothingFocalLoss(nn.Module):
         self.smoothing = smoothing
 
     def forward(self, pred, target):
-        classes = pred.dim(1)
+        classes = pred.shape[1]
         pred_ls = (1 - self.smoothing) * pred + self.smoothing / classes
         pred_ls = torch.clamp(pred_ls, min=self.eps, max=1.0 - self.eps)
         cross_entropy = -target * torch.log(pred_ls)
