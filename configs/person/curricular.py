@@ -4,12 +4,12 @@ from dssl_dl_utils import Size2D
 
 seed = 42
 gpus = [0]
-batch_size = 256
+batch_size = 128
 epochs = 100
 image_size = Size2D(96, 192)
 num_workers = 16 // len(gpus)
 backbone_max_stride = 16
-reid_features_number = 512
+reid_features_number = 1024
 data_base_path = Path('/media/svakhreev/fast/person_reid')
 
 
@@ -18,7 +18,7 @@ def datamodule_cfg():
         type='DataModule',
         train_paths=[p for p in (data_base_path / 'train').iterdir() if p.suffix == '.tar'],
         val_paths=[p for p in (data_base_path / 'test').iterdir() if p.suffix == '.tar'],
-        sampler=dict(type='PersonSampler', output_path=data_base_path / 'train_shards'),
+        sampler=dict(type='ClassSampler', output_path=data_base_path / 'train_shards'),
         full_resample=False,
         image_size=image_size,
         with_keypoints_and_masks=True,
@@ -57,7 +57,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
     return dict(
         type='BaselinePersonReid',
         # Model agnostic parameters
-        backbone_cfg=dict(type='OSNET_AIN_x0_75'),
+        backbone_cfg=dict(type='OSNET_AIN_x1_0'),
         head_cfg=dict(
             type='GDC',
             reid_features_number=reid_features_number,
@@ -72,8 +72,9 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         loss_distance_cfg=None,
         loss_regularizer_cfg=None,
         loss_reducer_cfg=None,
-        loss_cfg=dict(type='SphereProduct2', name='sphere2',
-                      in_features=reid_features_number, out_features=train_num_classes),
+        loss_cfg=dict(type='CurricularFace', name='curricular',
+                      in_features=reid_features_number, out_features=train_num_classes,
+                      loss_dict=dict(type='LabelSmoothCrossEntropyLoss', classes=train_num_classes)),
 
         # Optimization stuff agnostic parameters
         optimizer_cfg=dict(

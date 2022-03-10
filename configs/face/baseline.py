@@ -4,24 +4,23 @@ from dssl_dl_utils import Size2D
 
 seed = 42
 gpus = [0]
-batch_size = 128
+batch_size = 64
 epochs = 100
-image_size = Size2D(96, 192)
+image_size = Size2D(112, 112)
 num_workers = 16 // len(gpus)
 backbone_max_stride = 16
-reid_features_number = 1024
-data_base_path = Path('/media/svakhreev/fast/person_reid')
+reid_features_number = 128
+data_base_path = Path('/media/svakhreev/fast/webface')
 
 
 def datamodule_cfg():
     return dict(
-        type='DataModule',
-        train_paths=[p for p in (data_base_path / 'train').iterdir() if p.suffix == '.tar'],
-        val_paths=[p for p in (data_base_path / 'test').iterdir() if p.suffix == '.tar'],
-        sampler=dict(type='PersonSampler', output_path=data_base_path / 'train_shards'),
+        type='FaceDataModule',
+        train_paths=[p for p in (data_base_path / 'train/webface42m').iterdir() if p.suffix == '.tar'],
+        val_paths=[p for p in (data_base_path / 'test/glint360k').iterdir() if p.suffix == '.tar'],
+        sampler=dict(type='FaceClassSampler', output_path=data_base_path / 'train_shards'),
         full_resample=False,
         image_size=image_size,
-        with_keypoints_and_masks=True,
         batch_size=batch_size,
         num_workers=num_workers,
         drop_last=True,
@@ -48,7 +47,7 @@ def trainer_cfg(train_num_classes, **kwargs):
         wandb_logger=dict(
             name=f'{Path(__file__).stem}_{image_size.width}x{image_size.height}'
                  f'_bs{batch_size}_ep{epochs}_cls{train_num_classes}',
-            project='person_reid'
+            project='face_reid'
         )
     )
 
@@ -72,9 +71,8 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         loss_distance_cfg=None,
         loss_regularizer_cfg=None,
         loss_reducer_cfg=None,
-        loss_cfg=dict(type='CurricularFace', name='curricular',
-                      in_features=reid_features_number, out_features=train_num_classes,
-                      loss_dict=dict(type='LabelSmoothCrossEntropyLoss', classes=train_num_classes)),
+        loss_cfg=dict(type='SphereProduct2', name='sphere2',
+                      in_features=reid_features_number, out_features=train_num_classes),
 
         # Optimization stuff agnostic parameters
         optimizer_cfg=dict(

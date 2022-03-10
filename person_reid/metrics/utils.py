@@ -28,6 +28,7 @@ def plot_intra_inter_hist(inter_class_distances, intra_class_distances,
     inter_class_distances = inter_class_distances.cpu().numpy()
     intra_class_distances = intra_class_distances.cpu().numpy()
 
+    sample_count = min(sample_count, len(inter_class_distances))
     inter_class_distances = np.random.choice(inter_class_distances, sample_count, replace=False)
     intra_class_distances = np.random.choice(intra_class_distances, sample_count, replace=False)
     indices = np.full((sample_count * 2,), fill_value='inter', dtype=np.object)

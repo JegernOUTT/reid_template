@@ -9,7 +9,7 @@ epochs = 100
 image_size = Size2D(96, 192)
 num_workers = 16 // len(gpus)
 backbone_max_stride = 16
-reid_features_number = 512
+reid_features_number = 256
 data_base_path = Path('/media/svakhreev/fast/person_reid')
 
 
@@ -18,7 +18,7 @@ def datamodule_cfg():
         type='DataModule',
         train_paths=[p for p in (data_base_path / 'train').iterdir() if p.suffix == '.tar'],
         val_paths=[p for p in (data_base_path / 'test').iterdir() if p.suffix == '.tar'],
-        sampler=dict(type='PersonSampler', output_path=data_base_path / 'train_shards'),
+        sampler=dict(type='ClassSampler', output_path=data_base_path / 'train_shards'),
         full_resample=False,
         image_size=image_size,
         with_keypoints_and_masks=True,
@@ -65,14 +65,15 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
                                     image_size.width // backbone_max_stride)
         ),
         # Batch data miner agnostic parameters
-        miner_distance_cfg=dict(type='LpDistance', p=2, power=1),
-        miner_cfg=dict(type='BatchHardMiner'),
+        miner_distance_cfg=None,
+        miner_cfg=None,
 
         # Loss stuff agnostic parameters
-        loss_distance_cfg=dict(type='LpDistance', p=2, power=1),
+        loss_distance_cfg=None,
         loss_regularizer_cfg=None,
         loss_reducer_cfg=None,
-        loss_cfg=dict(type='GeneralizedLiftedStructureLoss', name='triplet'),
+        loss_cfg=dict(type='SphereProduct2', name='sphere2',
+                      in_features=reid_features_number, out_features=train_num_classes),
 
         # Optimization stuff agnostic parameters
         optimizer_cfg=dict(
@@ -84,7 +85,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         scheduler_cfg=dict(
             type='CyclicLR',
             base_lr=1e-5 * len(gpus),
-            max_lr=1e-3 * len(gpus),
+            max_lr=5e-4 * len(gpus),
             step_size_up=int(train_dataset_len // batch_size * (epochs * 0.1)),
             mode='triangular2',
             cycle_momentum=False,

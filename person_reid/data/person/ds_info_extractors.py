@@ -14,7 +14,7 @@ class Market1501:
         return 'market_1501'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 1501
 
     @staticmethod
@@ -24,13 +24,13 @@ class Market1501:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx = int(key[0]) - 1
+        class_idx = int(key[0]) - 1
         cam_idx = int(key[1][1])
         return {
             '_dataset_idx': Market1501.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -42,7 +42,7 @@ class Last:
         return 'last'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 5000
 
     @staticmethod
@@ -52,12 +52,12 @@ class Last:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].replace('__', '_').split('_')
-        person_idx, image_idx, video_idx, frame_idx, bbox_idx, clothes_idx = map(int, key)
+        class_idx, image_idx, video_idx, frame_idx, bbox_idx, clothes_idx = map(int, key)
         return {
             '_dataset_idx': Last.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': clothes_idx - 1
+            '_appearance_idx': clothes_idx - 1
         }
 
 
@@ -69,7 +69,7 @@ class LastTest:
         return 'last_test'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 5808
 
     @staticmethod
@@ -80,13 +80,13 @@ class LastTest:
     def extract(path: str):
         key = path.split('/')[-1].replace('__', '_').split('_')
         is_query = 'query' in path
-        person_idx, image_idx, video_idx, frame_idx, bbox_idx, clothes_idx = map(int, key)
+        class_idx, image_idx, video_idx, frame_idx, bbox_idx, clothes_idx = map(int, key)
         return {
             '_dataset_idx': LastTest.IDX,
             '_is_query': is_query,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': clothes_idx
+            '_appearance_idx': clothes_idx
         }
 
 
@@ -98,7 +98,7 @@ class DDDPes:
         return '3dpes'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 193
 
     @staticmethod
@@ -110,9 +110,9 @@ class DDDPes:
         key = path.split('/')[-1].split('_')
         return {
             '_dataset_idx': DDDPes.IDX,
-            '_person_idx': int(key[0]) - 1,
+            '_class_idx': int(key[0]) - 1,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -124,7 +124,7 @@ class Caviar4Reid:
         return 'caviar4reid'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 72
 
     @staticmethod
@@ -136,9 +136,9 @@ class Caviar4Reid:
         key = path.split('/')[-1]
         return {
             '_dataset_idx': Caviar4Reid.IDX,
-            '_person_idx': int(key[:4]) - 1,
+            '_class_idx': int(key[:4]) - 1,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -157,7 +157,7 @@ class CUHK03:
         return 'cuhk_03'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 1467
 
     @staticmethod
@@ -167,14 +167,14 @@ class CUHK03:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        cam_idx, person_idx = map(int, key[:2])
-        person_idx += CUHK03.CAM_OFFSETS[cam_idx]
+        cam_idx, class_idx = map(int, key[:2])
+        class_idx += CUHK03.CAM_OFFSETS[cam_idx]
 
         return {
             '_dataset_idx': CUHK03.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -186,7 +186,7 @@ class DukeMTMC:
         return 'duke_mtmc'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 1812
 
     @staticmethod
@@ -196,12 +196,12 @@ class DukeMTMC:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx, cam_idx = int(key[0]), int(key[1][1:])
+        class_idx, cam_idx = int(key[0]), int(key[1][1:])
         return {
             '_dataset_idx': DukeMTMC.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -218,7 +218,7 @@ class ETH:
         return 'eth'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 146
 
     @staticmethod
@@ -229,13 +229,13 @@ class ETH:
     def extract(path: str):
         key = path.split('/')
         cam_idx = int(key[-3][3:])
-        person_idx = int(key[-2][1:])
-        person_idx += ETH.CAM_OFFSETS[cam_idx]
+        class_idx = int(key[-2][1:])
+        class_idx += ETH.CAM_OFFSETS[cam_idx]
         return {
             '_dataset_idx': ETH.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -247,7 +247,7 @@ class FSBReid:
         return 'fsb_reid'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 164
 
     @staticmethod
@@ -259,9 +259,9 @@ class FSBReid:
         key = path.split('/')
         return {
             '_dataset_idx': FSBReid.IDX,
-            '_person_idx': int(key[-2]),
+            '_class_idx': int(key[-2]),
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -277,7 +277,7 @@ class ILIDSVID:
         return 'ilids_vid'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 600
 
     @staticmethod
@@ -288,13 +288,13 @@ class ILIDSVID:
     def extract(path: str):
         key = path.split('/')[-1].split('_')
         cam_idx = int(key[0][3:])
-        person_idx = int(key[1][6:])
-        person_idx += ILIDSVID.CAM_OFFSETS[cam_idx]
+        class_idx = int(key[1][6:])
+        class_idx += ILIDSVID.CAM_OFFSETS[cam_idx]
         return {
             '_dataset_idx': ILIDSVID.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -306,7 +306,7 @@ class MSMT17:
         return 'msmt_17'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 4101
 
     @staticmethod
@@ -316,12 +316,12 @@ class MSMT17:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx, _, cam_idx = map(int, key[:3])
+        class_idx, _, cam_idx = map(int, key[:3])
         return {
             '_dataset_idx': MSMT17.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -333,7 +333,7 @@ class PKUReid:
         return 'pku_reid'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 114
 
     @staticmethod
@@ -343,13 +343,13 @@ class PKUReid:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx, cam_idx, _ = map(int, key[:3])
+        class_idx, cam_idx, _ = map(int, key[:3])
 
         return {
             '_dataset_idx': PKUReid.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -361,7 +361,7 @@ class PRID2011:
         return 'prid_2011'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 749
 
     @staticmethod
@@ -372,17 +372,17 @@ class PRID2011:
     def extract(path: str):
         key = path.split('/')
         if key[-3] == 'single_shot':
-            person_idx = int(key[-1][7:])
+            class_idx = int(key[-1][7:])
             cam = key[-2]
         else:
-            person_idx = int(key[-2][7:])
+            class_idx = int(key[-2][7:])
             cam = key[-3]
 
         return {
             '_dataset_idx': PRID2011.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': 0 if cam == 'cam_a' else 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -394,7 +394,7 @@ class QMULILIDS:
         return 'qmul_ilids'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 119
 
     @staticmethod
@@ -404,12 +404,12 @@ class QMULILIDS:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-1][:4])
+        class_idx = int(key[-1][:4])
         return {
             '_dataset_idx': QMULILIDS.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -421,7 +421,7 @@ class Real28:
         return 'Real28'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 28
 
     @staticmethod
@@ -431,12 +431,12 @@ class Real28:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx, cam_idx, clothes_idx, _ = map(int, key)
+        class_idx, cam_idx, clothes_idx, _ = map(int, key)
         return {
             '_dataset_idx': Real28.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': clothes_idx - 1
+            '_appearance_idx': clothes_idx - 1
         }
 
 
@@ -448,7 +448,7 @@ class VCClothes:
         return 'VC-Clothes'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 512
 
     @staticmethod
@@ -458,12 +458,12 @@ class VCClothes:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('-')
-        person_idx, cam_idx, clothes_idx, _ = map(int, key)
+        class_idx, cam_idx, clothes_idx, _ = map(int, key)
         return {
             '_dataset_idx': VCClothes.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': clothes_idx - 1
+            '_appearance_idx': clothes_idx - 1
         }
 
 
@@ -475,7 +475,7 @@ class Viper:
         return 'viper'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 632
 
     @staticmethod
@@ -485,14 +485,14 @@ class Viper:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-1].split('_')[0])
+        class_idx = int(key[-1].split('_')[0])
         cam_idx = 0 if key[-2] == 'cam_a' else 1
 
         return {
             '_dataset_idx': Viper.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': cam_idx,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -504,7 +504,7 @@ class Ward:
         return 'ward'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 70
 
     @staticmethod
@@ -514,14 +514,14 @@ class Ward:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-1][:4])
+        class_idx = int(key[-1][:4])
         cam_idx = int(key[-1][4:8])
 
         return {
             '_dataset_idx': Ward.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -540,7 +540,7 @@ class CUHK02:
         return 'cuhk_02'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 1816
 
     @staticmethod
@@ -550,17 +550,17 @@ class CUHK02:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-1].split('_')[0])
+        class_idx = int(key[-1].split('_')[0])
         cam_idx = int(key[-2][3:])
-        person_idx += CUHK02.SCENE_OFFSETS[key[-3]]
+        class_idx += CUHK02.SCENE_OFFSETS[key[-3]]
         if key[-3] in {'P4', 'P5'}:
-            person_idx += 1
+            class_idx += 1
 
         return {
             '_dataset_idx': CUHK02.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -572,7 +572,7 @@ class RAiD:
         return 'RAiD'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 43
 
     @staticmethod
@@ -582,12 +582,12 @@ class RAiD:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx, cam_idx, _ = map(int, key)
+        class_idx, cam_idx, _ = map(int, key)
         return {
             '_dataset_idx': VCClothes.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -599,7 +599,7 @@ class MARS:
         return 'mars'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 1259
 
     @staticmethod
@@ -609,13 +609,13 @@ class MARS:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-2])
+        class_idx = int(key[-2])
         cam_idx = int(key[-1][5])
         return {
             '_dataset_idx': MARS.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -638,7 +638,7 @@ class UnrealPerson:
         return 'unreal_person'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 6799
 
     @staticmethod
@@ -651,18 +651,18 @@ class UnrealPerson:
         model_type_idx = int(key[-3][10])
         scene_type_idx = int(key[-3][8])
         name_splat = key[-1].split('_')
-        person_idx = int(name_splat[0])
+        class_idx = int(name_splat[0])
         cam_idx = int(name_splat[1][1:])
-        person_idx += UnrealPerson.MODEL_TYPE_OFFSETS[model_type_idx]
+        class_idx += UnrealPerson.MODEL_TYPE_OFFSETS[model_type_idx]
         cam_idx += UnrealPerson.SCENE_TYPE_OFFSETS[scene_type_idx]
         if scene_type_idx == 3:
             cam_idx -= 23
 
         return {
             '_dataset_idx': UnrealPerson.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -674,7 +674,7 @@ class CUHKSYSU:
         return 'cuhksysu'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 11930
 
     @staticmethod
@@ -684,12 +684,12 @@ class CUHKSYSU:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx = int(key[0][1:])
+        class_idx = int(key[0][1:])
         return {
             '_dataset_idx': CUHKSYSU.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -701,7 +701,7 @@ class GRID:
         return 'grid'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 250
 
     @staticmethod
@@ -711,13 +711,13 @@ class GRID:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx = int(key[0])
+        class_idx = int(key[0])
         cam_idx = 0 if 'gallery' in path else 1
         return {
             '_dataset_idx': GRID.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -729,7 +729,7 @@ class PRAI1581:
         return 'PRAI1581'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 1580
 
     @staticmethod
@@ -739,12 +739,12 @@ class PRAI1581:
     @staticmethod
     def extract(path: str):
         key = path.split('/')[-1].split('_')
-        person_idx = int(key[0])
+        class_idx = int(key[0])
         return {
             '_dataset_idx': PRAI1581.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -756,7 +756,7 @@ class WildtrackDataset:
         return 'wildtrack_dataset'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 313
 
     @staticmethod
@@ -766,13 +766,13 @@ class WildtrackDataset:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-2])
+        class_idx = int(key[-2])
         cam_idx = int(key[-1].split('_')[0])
         return {
             '_dataset_idx': WildtrackDataset.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': cam_idx,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -784,7 +784,7 @@ class RPIField:
         return 'RPIfield'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 4108
 
     @staticmethod
@@ -794,13 +794,13 @@ class RPIField:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-2])
+        class_idx = int(key[-2])
         cam_idx = int(key[-3][4:])
         return {
             '_dataset_idx': RPIField.IDX,
-            '_person_idx': person_idx - 1,
+            '_class_idx': class_idx - 1,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -822,7 +822,7 @@ class LPW:
         return 'lpw'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 2731
 
     @staticmethod
@@ -832,18 +832,18 @@ class LPW:
     @staticmethod
     def extract(path: str):
         key = path.split('/')
-        person_idx = int(key[-2])
+        class_idx = int(key[-2])
         cam_idx = int(key[-3][4:])
         scene_idx = int(key[-4][4:]) - 1
 
-        person_idx += LPW.PERSON_SCENE_OFFSETS[scene_idx]
+        class_idx += LPW.PERSON_SCENE_OFFSETS[scene_idx]
         cam_idx += LPW.CAMERA_SCENE_OFFSETS[scene_idx]
 
         return {
             '_dataset_idx': LPW.IDX,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': cam_idx - 1,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -856,7 +856,7 @@ class SYSU30KTest:
         return 'sysu30k_test'
 
     @staticmethod
-    def persons_count():
+    def class_count():
         return 1001
 
     @staticmethod
@@ -868,16 +868,16 @@ class SYSU30KTest:
         key = path.split('/')
         is_query = 'query' in path
         if key[-2] == '0000others':
-            person_idx = 1000
+            class_idx = 1000
         else:
-            person_idx = int(key[-2]) - SYSU30KTest.PERSON_OFFSET
+            class_idx = int(key[-2]) - SYSU30KTest.PERSON_OFFSET
 
         return {
             '_dataset_idx': SYSU30KTest.IDX,
             '_is_query': is_query,
-            '_person_idx': person_idx,
+            '_class_idx': class_idx,
             '_cam_idx': IGNORE_VALUE,
-            '_clothes_idx': IGNORE_VALUE
+            '_appearance_idx': IGNORE_VALUE
         }
 
 
@@ -925,37 +925,10 @@ def extract_ds_metadata(path: Union[Path, str]):
     assert ds_name in DB_EXTRACTORS_PER_DS_NAME, f'Unknown dataset: {ds_name}'
     extractor = DB_EXTRACTORS_PER_DS_NAME[ds_name]
     extracted = extractor.extract(str(path))
-    assert extracted['_person_idx'] < extractor.persons_count(), f'Check {extractor.__name__} extractor validity'
-    assert extracted['_person_idx'] >= 0, f'Check {extractor.__name__} extractor validity'
+    assert extracted['_class_idx'] < extractor.class_count(), f'Check {extractor.__name__} extractor validity'
+    assert extracted['_class_idx'] >= 0, f'Check {extractor.__name__} extractor validity'
     assert extracted['_cam_idx'] == IGNORE_VALUE or extracted['_cam_idx'] < extractor.cameras_count(), \
         f'Check {extractor.__name__} extractor validity'
     assert extracted['_cam_idx'] >= 0 or extracted['_cam_idx'] < extractor.cameras_count(), \
         f'Check {extractor.__name__} extractor validity'
     return extracted
-
-
-if __name__ == '__main__':
-    def _expose_metadata(data):
-        data.update(extract_ds_metadata(data['__key__']))
-        return data
-
-    import webdataset, pickle
-    from tqdm import tqdm
-
-    paths = [
-        str(p)
-        for p in Path('/media/svakhreev/fast/person_reid/test/').iterdir()
-        if p.name.startswith('sysu') and p.suffix == '.tar'
-    ]
-    dataset = (webdataset.WebDataset(paths)
-               .select(lambda x: 'jpg' in x or 'png' in x or 'jpeg' in x)
-               .select(lambda x: pickle.loads(x['pickle']).bbox is not None)
-               .select(lambda x: pickle.loads(x['pickle']).keypoint_graph is not None)
-               .map(_expose_metadata))
-
-    all_categories = set(range(SYSU30KTest.persons_count()))
-    gathered_categories = set()
-    for item in tqdm(dataset):
-        gathered_categories.add(item['_person_idx'])
-
-    print(all_categories.difference(gathered_categories))

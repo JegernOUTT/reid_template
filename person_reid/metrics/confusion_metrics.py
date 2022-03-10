@@ -90,7 +90,8 @@ class ConfusionMetrics(Metric):
         min_aps, max_aps, mean_aps = [], [], []
         for class_idx in tqdm(categories, desc='Calculating confusion metrics', leave=False):
             query_embeddings = self.query_embeddings[self.query_labels == class_idx]
-            dists = torch.cdist(query_embeddings, self.gallery_embeddings)
+            dists = torch.cdist(query_embeddings, self.gallery_embeddings,
+                                compute_mode='use_mm_for_euclid_dist')
             min_ap = self._calc_metrics_by_rank(class_idx, dists.min(dim=0)[0], min_metrics_by_rank)
             max_ap = self._calc_metrics_by_rank(class_idx, dists.max(dim=0)[0], max_metrics_by_rank)
             mean_ap = self._calc_metrics_by_rank(class_idx, dists.mean(dim=0), mean_metrics_by_rank)

@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 
 import torch
-from detector_utils.utils.other import load_module
+from dssl_dl_utils.utils.other import load_module
 from pytorch_lightning import Trainer
 
 from person_reid.utils.builders import build_main_module, build_data_module

@@ -59,7 +59,7 @@ class KeypointsMaskPersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin
         return x
 
     def training_step(self, batch, batch_idx):
-        images, gt_labels, masks, keypoints = batch['image'], batch['person_idx'], batch['mask'], batch['keypoints']
+        images, gt_labels, masks, keypoints = batch['image'], batch['class_idx'], batch['mask'], batch['keypoints']
         images = self.masks_keypoints_concat(self.train_transforms(images), masks, keypoints)
         embeddings = self.forward(images)
 
@@ -76,7 +76,7 @@ class KeypointsMaskPersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin
 
     def validation_step(self, batch, batch_idx, dataset_idx=0):
         images, gt_labels, is_query, masks, keypoints = \
-            batch['image'], batch['person_idx'], batch['is_query'], batch['mask'], batch['keypoints']
+            batch['image'], batch['class_idx'], batch['is_query'], batch['mask'], batch['keypoints']
         images = self.masks_keypoints_concat(self.val_transforms(images), masks, keypoints)
         embeddings = self.forward(images)
         for metric in self.metrics:

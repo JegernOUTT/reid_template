@@ -19,8 +19,10 @@ import torch.optim.lr_scheduler as LRSchedulerLib
 import torchmetrics as PLMetrics
 
 import person_reid.callbacks as Callbacks
-import person_reid.data.module as DataModules
-import person_reid.data.samplers as Samplers
+import person_reid.data.face.module as FaceDataModules
+import person_reid.data.person.module as PersonDataModules
+import person_reid.data.face.samplers as FaceSamplers
+import person_reid.data.person.samplers as PersonSamplers
 import person_reid.loss.softmax_losses as SoftmaxLosses
 import person_reid.metrics as CustomMetrics
 import person_reid.modelling.backbones as Backbones
@@ -83,7 +85,7 @@ def build_main_module(config):
 
 
 def build_data_module(config):
-    return _base_build(config, [DataModules])
+    return _base_build(config, [FaceDataModules, PersonDataModules])
 
 
 def build_backbone(config) -> Tuple[torch.nn.Module, int]:
@@ -182,4 +184,4 @@ def build_callbacks(config):
 
 def build_sampler(config):
     config = config.copy() if config is not None else config
-    return _base_build(config, [Samplers])
+    return _base_build(config, [FaceSamplers, PersonSamplers])

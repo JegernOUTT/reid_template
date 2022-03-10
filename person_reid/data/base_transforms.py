@@ -1,11 +1,10 @@
 import random
-from typing import Tuple, Dict
+from typing import Tuple
 
 import albumentations as A
 import cv2
 import numpy as np
 from dssl_dl_utils import Size2D
-from dssl_dl_utils.utils.image import read_image
 
 __all__ = ['make_crop_and_resize']
 
@@ -79,9 +78,10 @@ def make_crop_and_resize(image_size: Size2D, with_keypoints_and_masks: bool = Fa
     def expose_metadata(data):
         data['image'] = next((data[suf] for suf in ('jpg', 'jpeg', 'png') if suf in data))
         img_size = Size2D(data['image'].shape[1], data['image'].shape[0])
-        data['bbox'] = data['pickle'].bbox.xyxy(img_size)
-        data['mask'] = data['pickle'].bitmap_mask.mask
-        data['keypoints'] = data['pickle'].keypoint_graph.to_numpy(img_size)
+        if with_keypoints_and_masks:
+            data['bbox'] = data['pickle'].bbox.xyxy(img_size)
+            data['mask'] = data['pickle'].bitmap_mask.mask
+            data['keypoints'] = data['pickle'].keypoint_graph.to_numpy(img_size)
         return data
 
     def crop_and_resize(data):
@@ -110,5 +110,36 @@ def make_crop_and_resize(image_size: Size2D, with_keypoints_and_masks: bool = Fa
         output.update(data)
 
         return output
+
+    return crop_and_resize
+
+
+def make_resize(image_size: Size2D):
+    transform_pipeline = A.Compose(
+        [
+            LetterPackResize(width=image_size.width, height=image_size.height),
+            A.PadIfNeeded(min_height=image_size.height, min_width=image_size.width,
+                          border_mode=0, value=(127, 127, 127), p=1)
+        ]
+    )
+
+    def expose_metadata(data):
+        data['image'] = next((data[suf] for suf in ('jpg', 'jpeg', 'png') if suf in data))
+        return data
+
+    def crop_and_resize(data):
+        data = expose_metadata(data)
+        image = data.pop('image')
+        try:
+            augmented = transform_pipeline(image=image)
+            augmented['valid'] = True
+        except (cv2.error, ZeroDivisionError):
+            print(f'Invalid image: {data["__key__"]}, skipping it')
+            augmented = data
+            augmented.update({'valid': False, 'image': image})
+
+        data['image'] = augmented['image']
+        data['valid'] = augmented['valid']
+        return data
 
     return crop_and_resize

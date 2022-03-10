@@ -12,12 +12,12 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from person_reid.data.base_transforms import make_crop_and_resize, jpg_decoder, jpeg_decoder, png_decoder
-from person_reid.data.ds_info_extractors import DATASETS_EXTRACTORS, IGNORE_VALUE, extract_ds_metadata
+from person_reid.data.person.ds_info_extractors import DATASETS_EXTRACTORS, IGNORE_VALUE, extract_ds_metadata
 
-__all__ = ['DataModule']
+__all__ = ['PersonDataModule']
 
 
-class DataModule(pl.LightningDataModule):
+class PersonDataModule(pl.LightningDataModule):
     CACHE_FILENAME = 'cache.json'
 
     def __init__(self,
@@ -66,13 +66,13 @@ class DataModule(pl.LightningDataModule):
 
         def _calc_indexes_offsets(ds_indexes):
             indexes_offsets = {}
-            person_idx_buff, cam_idx_buff = 0, 0
+            class_idx_buff, cam_idx_buff = 0, 0
             for idx in sorted(list(ds_indexes)):
                 indexes_offsets[idx] = {
-                    '_person_idx': person_idx_buff,
+                    '_class_idx': class_idx_buff,
                     '_cam_idx': cam_idx_buff
                 }
-                person_idx_buff += DATASETS_EXTRACTORS[idx].persons_count()
+                class_idx_buff += DATASETS_EXTRACTORS[idx].class_count()
                 cam_idx_buff += DATASETS_EXTRACTORS[idx].cameras_count()
             return indexes_offsets
 
@@ -135,7 +135,7 @@ class DataModule(pl.LightningDataModule):
 
     def _recalculate_indexes(self, mode, data):
         offsets = self._train_indexes_offsets if mode == 'train' else self._val_indexes_offsets
-        data['_person_idx'] += offsets[data['_dataset_idx']]['_person_idx']
+        data['_class_idx'] += offsets[data['_dataset_idx']]['_class_idx']
         if data['_cam_idx'] != IGNORE_VALUE:
             data['_cam_idx'] += offsets[data['_dataset_idx']]['_cam_idx']
         return data
@@ -143,9 +143,9 @@ class DataModule(pl.LightningDataModule):
     def _format_output(self, mode, data):
         output = {'image': data['image'],
                   'dataset_idx': np.array(data['_dataset_idx'], dtype=np.long),
-                  'person_idx': np.array(data['_person_idx'], dtype=np.long),
+                  'class_idx': np.array(data['_class_idx'], dtype=np.long),
                   'cam_idx': np.array(data['_cam_idx'], dtype=np.long),
-                  'clothes_idx': np.array(data['_clothes_idx'], dtype=np.long)}
+                  'clothes_idx': np.array(data['_appearance_idx'], dtype=np.long)}
         if self._with_keypoints_and_masks:
             output['mask'] = np.array(data['mask'], dtype=np.uint8)
             output['keypoints'] = np.array(data['keypoints'], dtype=np.float32)
@@ -198,9 +198,9 @@ class DataModule(pl.LightningDataModule):
     def test_dataloader(self):
         return self.val_dataloader()
 
-    def person_categories_count(self, mode):
+    def class_categories_count(self, mode):
         ds_indexes = self._train_ds_indexes if mode == 'train' else self._val_ds_indexes
-        return sum(DATASETS_EXTRACTORS[idx].persons_count() for idx in ds_indexes)
+        return sum(DATASETS_EXTRACTORS[idx].class_count() for idx in ds_indexes)
 
     def cameras_categories_count(self, mode):
         ds_indexes = self._train_ds_indexes if mode == 'train' else self._val_ds_indexes
@@ -211,7 +211,7 @@ class DataModule(pl.LightningDataModule):
 
     def _try_to_load_cache(self):
         assert len(self._train_paths) > 0
-        cache_path = Path(self._train_paths[0]).parent / DataModule.CACHE_FILENAME
+        cache_path = Path(self._train_paths[0]).parent / PersonDataModule.CACHE_FILENAME
         if not cache_path.exists():
             return False
 
@@ -243,7 +243,7 @@ class DataModule(pl.LightningDataModule):
         }
 
         assert len(self._train_paths) > 0
-        cache_path = Path(self._train_paths[0]).parent / DataModule.CACHE_FILENAME
+        cache_path = Path(self._train_paths[0]).parent / PersonDataModule.CACHE_FILENAME
         assert not cache_path.exists()
 
         with open(cache_path, 'w') as f:
@@ -253,32 +253,32 @@ class DataModule(pl.LightningDataModule):
 if __name__ == '__main__':
     import cv2
 
-    base_path = Path('/media/svakhreev/fast/person_reid/')
+    base_path = Path('/media/svakhreev/slow1/webface/')
     batch_size = 256
-    train_paths = [p for p in (base_path / 'train').iterdir() if p.suffix == '.tar']
-    data = DataModule(train_paths=train_paths,
-                      val_paths=[base_path / 'test/last_test.tar'],
-                      sampler=dict(type='PersonSampler', output_path=base_path / 'train_shards'),
-                      full_resample=False,
-                      batch_shuffle=False,
-                      image_size=Size2D(96, 192),
-                      with_keypoints_and_masks=True,
-                      batch_size=batch_size,
-                      num_workers=4,
-                      drop_last=True,
-                      prefetch_factor=8)
+    train_paths = [p for p in base_path.iterdir() if p.suffix == '.tar']
+    data = PersonDataModule(train_paths=train_paths,
+                            val_paths=[],
+                            sampler=dict(type='ClassSampler', output_path=base_path / 'train_shards'),
+                            full_resample=False,
+                            batch_shuffle=False,
+                            image_size=Size2D(112, 112),
+                            with_keypoints_and_masks=False,
+                            batch_size=batch_size,
+                            num_workers=4,
+                            drop_last=True,
+                            prefetch_factor=8)
     data.setup()
     data.resample()
 
-    print(f'Train person categories count: {data.person_categories_count("train")}')
-    print(f'Val person categories count: {data.person_categories_count("val")}')
-    print(f'Train camera categories count: {data.cameras_categories_count("train")}')
+    print(f'Train class categories count: {data.class_categories_count("train")}')
+    print(f'Val class categories count: {data.class_categories_count("val")}')
+    print(f'Train categories count: {data.cameras_categories_count("train")}')
     print(f'Val camera categories count: {data.cameras_categories_count("val")}\n')
 
     print(f'Sampling dataset')
     train_data = data.train_dataloader()
     cv2.namedWindow('image', flags=cv2.WINDOW_KEEPRATIO)
-    all_categories = set(range(data.person_categories_count("train")))
+    all_categories = set(range(data.class_categories_count("train")))
     for item in tqdm(train_data):
         for i in range(batch_size):
             image = cv2.cvtColor(item['image'][i].cpu().numpy(), cv2.COLOR_RGB2BGR)
@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
             cv2.imshow('image', image)
             print(f'Dataset index: {DATASETS_EXTRACTORS[item["dataset_idx"][i].item()].__name__}')
-            print(f'Person index: {item["person_idx"][i].item()}')
+            print(f'Class index: {item["class_idx"][i].item()}')
             print(f'Camera index: {item["cam_idx"][i].item()}')
             print(f'Clothes index: {item["clothes_idx"][i].item()}\n\n')
             cv2.waitKey(1)

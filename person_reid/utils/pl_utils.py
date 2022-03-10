@@ -12,15 +12,15 @@ def retrieve_data_module_info(data_module):
     data_module.setup(stage="fit")
     if rank_zero_only.rank == 0:
         data_module.resample()
-    print(f'Train person categories count: {data_module.person_categories_count("train")}')
-    print(f'Val person categories count: {data_module.person_categories_count("val")}')
+    print(f'Train class categories count: {data_module.class_categories_count("train")}')
+    print(f'Val class categories count: {data_module.class_categories_count("val")}')
     print(f'Train camera categories count: {data_module.cameras_categories_count("train")}')
     print(f'Val camera categories count: {data_module.cameras_categories_count("val")}\n')
 
     return dict(
-        train_num_classes=data_module.person_categories_count("train"),
+        train_num_classes=data_module.class_categories_count("train"),
         train_dataset_len=data_module.len('train'),
-        val_num_classes=data_module.person_categories_count('val'),
+        val_num_classes=data_module.class_categories_count('val'),
         val_dataset_len=data_module.len('val')
     )
 

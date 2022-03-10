@@ -3,7 +3,8 @@ from typing import Any, Dict, List, Tuple
 
 import kornia.augmentation as KA
 import torch
-import torch.nn.functional as F
+
+from person_reid.modelling.common import l2_norm
 
 __all__ = ['ModuleBaseMixin', 'OnnxFreezable', 'KorniaAugmentations', 'ModuleBuilders', 'CfgT']
 
@@ -14,7 +15,7 @@ class OnnxFreezable(ABC):
     def forward_postprocess(self, x):
         x = self.backbone(x)
         x = self.head(x)
-        return F.normalize(x, dim=1)
+        return l2_norm(x, axis=1)
 
     @property
     def output_names(self) -> List:

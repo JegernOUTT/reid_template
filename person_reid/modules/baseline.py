@@ -56,7 +56,7 @@ class BaselinePersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
         return x
 
     def training_step(self, batch, batch_idx):
-        images, gt_labels = batch['image'], batch['person_idx']
+        images, gt_labels = batch['image'], batch['class_idx']
         embeddings = self.forward(self.train_transforms(images))
 
         loss_values = []
@@ -71,7 +71,7 @@ class BaselinePersonReid(pl.LightningModule, OnnxFreezable, ModuleBaseMixin):
         return torch.stack(loss_values).sum()
 
     def validation_step(self, batch, batch_idx, dataset_idx=0):
-        images, gt_labels, is_query = batch['image'], batch['person_idx'], batch['is_query']
+        images, gt_labels, is_query = batch['image'], batch['class_idx'], batch['is_query']
         embeddings = self.forward(self.val_transforms(images))
 
         for metric in self.metrics:

@@ -18,7 +18,7 @@ def datamodule_cfg():
         type='DataModule',
         train_paths=[p for p in (data_base_path / 'train').iterdir() if p.suffix == '.tar'],
         val_paths=[p for p in (data_base_path / 'test').iterdir() if p.suffix == '.tar'],
-        sampler=dict(type='PersonSampler', output_path=data_base_path / 'train_shards'),
+        sampler=dict(type='ClassSampler', output_path=data_base_path / 'train_shards'),
         full_resample=False,
         image_size=image_size,
         with_keypoints_and_masks=True,
@@ -72,8 +72,7 @@ def mainmodule_cfg(train_num_classes, train_dataset_len, **kwargs):
         loss_distance_cfg=dict(type='LpDistance', p=2, power=1),
         loss_regularizer_cfg=None,
         loss_reducer_cfg=None,
-        loss_cfg=dict(type='TripletMarginLoss', name='triplet', margin=0.05, swap=False,
-                      smooth_loss=False, triplets_per_anchor="all"),
+        loss_cfg=dict(type='GeneralizedLiftedStructureLoss', name='triplet'),
 
         # Optimization stuff agnostic parameters
         optimizer_cfg=dict(
